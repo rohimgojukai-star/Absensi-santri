@@ -243,14 +243,22 @@ function pgAbsen(kelas) {
         });
         document.getElementById("btnSimpanSemua").addEventListener("click", async () => {
             tgl = document.getElementById("tglPick").value || tgl;
-            const rows = document.querySelectorAll("[data-sid]");
+            // FIX: only select <tr> rows to avoid duplicate data-sid from buttons
+            const rows = document.querySelectorAll("tr[data-sid]");
             if (!rows.length) return toast("Belum ada data", 1);
-            const records = [...rows].map(r => ({
-                kelas, tanggal: tgl,
-                santri_id: parseInt(r.dataset.sid),
-                status: document.getElementById("sel_"+r.dataset.sid)?.value || "hadir",
-                updated_at: new Date().toISOString()
-            }));
+            const seen = new Set();
+            const records = [];
+            rows.forEach(r => {
+                const sid = parseInt(r.dataset.sid);
+                if (seen.has(sid)) return;
+                seen.add(sid);
+                records.push({
+                    kelas, tanggal: tgl,
+                    santri_id: sid,
+                    status: document.getElementById("sel_"+sid)?.value || "hadir",
+                    updated_at: new Date().toISOString()
+                });
+            });
             await dbSimpan(records);
             loadAbsen();
         });
@@ -368,19 +376,18 @@ function pgLaporan() {
     draw();
 }
 
-// ── LOGO (Supabase Storage — sinkron semua device) ────────────
-const LOGO_BUCKET = "app-assets";
+// ── LOGO ─────────────────────────────────────────────────────
+const LOGO_BUCKET = "App-assets";
 const LOGO_PATH   = "logo/rql_logo";
 
 async function loadLogo() {
     const btn = document.getElementById("logoBtn");
     try {
-        // Tambahkan cache-buster agar browser tidak pakai versi lama
         const { data } = sb.storage.from(LOGO_BUCKET).getPublicUrl(LOGO_PATH);
         if (data?.publicUrl) {
             const img = new Image();
-            img.onload = () => { btn.innerHTML = '<img src="'+data.publicUrl+'?t='+Date.now()+'">'; };
-            img.onerror = () => {}; // Belum ada logo, biarkan icon default
+            img.onload = () => { btn.innerHTML = '<img src="' + data.publicUrl + '?t=' + Date.now() + '">'; };
+            img.onerror = () => { /* belum ada logo */ };
             img.src = data.publicUrl + "?t=" + Date.now();
         }
     } catch(e) {}
@@ -389,38 +396,20 @@ async function loadLogo() {
 (function(){
     const btn  = document.getElementById("logoBtn");
     const file = document.getElementById("logoFile");
-
-    // Muat logo dari Supabase saat halaman dibuka
     loadLogo();
-
     btn.addEventListener("click", () => file.click());
     file.addEventListener("change", async e => {
         const f = e.target.files[0];
         if (!f) return;
         file.value = "";
-
-        // Validasi ukuran (max 1MB)
-        if (f.size > 1024 * 1024) return toast("Logo maksimal 1MB", 1);
-
+        if (f.size > 1 * 1024 * 1024) return toast("Logo maksimal 1MB", 1);
         toast("Mengupload logo...");
         btn.style.opacity = "0.5";
-
-        const { error } = await sb.storage
-            .from(LOGO_BUCKET)
-            .upload(LOGO_PATH, f, {
-                upsert: true,          // Timpa jika sudah ada
-                contentType: f.type
-            });
-
+        const { error } = await sb.storage.from(LOGO_BUCKET).upload(LOGO_PATH, f, { upsert: true, contentType: f.type });
         btn.style.opacity = "1";
-
-        if (error) {
-            toast("Gagal upload logo: " + error.message, 1);
-            return;
-        }
-
+        if (error) { toast("Gagal upload: " + error.message, 1); return; }
         await loadLogo();
-        toast("Logo berhasil disimpan di semua device ✓");
+        toast("Logo tersimpan di semua device ✓");
     });
 })();
 
