@@ -2,390 +2,402 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rumah Qur'an Lestari - Absensi Santri</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
-        body { background: linear-gradient(145deg, #0a3a2c 0%, #1b5e3a 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1300px; margin: 0 auto; }
-        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border-radius: 40px; padding: 15px 25px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; color: white; }
-        .logo-area { display: flex; align-items: center; gap: 15px; }
-        .logo-img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; background: white; padding: 5px; cursor: pointer; }
-        .logo-placeholder { width: 60px; height: 60px; background: #f4a261; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
-        .title-text h1 { font-size: 1.6rem; }
-        .dashboard { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin-bottom: 35px; }
-        .dash-btn { background: white; border: none; padding: 14px 28px; border-radius: 60px; font-size: 1.1rem; font-weight: bold; color: #1e4a2f; cursor: pointer; transition: 0.2s; box-shadow: 0 6px 14px rgba(0,0,0,0.2); display: inline-flex; align-items: center; gap: 10px; }
-        .dash-btn:hover { transform: translateY(-3px); background: #f4a261; color: white; }
-        .card { background: white; border-radius: 28px; padding: 25px; box-shadow: 0 20px 35px rgba(0,0,0,0.2); margin-bottom: 20px; }
-        .class-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
-        .class-btn { background: #e9ecef; border: none; padding: 10px 25px; border-radius: 40px; font-weight: bold; cursor: pointer; }
-        .class-btn.active { background: #2c6e49; color: white; }
-        .date-picker { background: #f8f9fa; padding: 15px; border-radius: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
-        input, select, button { padding: 10px 16px; border-radius: 14px; border: 1px solid #ccc; font-size: 0.95rem; }
-        button { background: #2c3e50; color: white; border: none; cursor: pointer; }
-        button:hover { background: #1e2f3a; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; overflow-x: auto; display: block; }
-        th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; vertical-align: middle; }
-        th { background: #2c3e50; color: white; }
-        .status-select { padding: 6px; border-radius: 20px; }
-        .btn-small { padding: 5px 10px; font-size: 0.75rem; margin: 2px; }
-        .student-form { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
-        .footer-actions { margin-top: 20px; display: flex; gap: 15px; justify-content: flex-end; }
-        .loading { text-align: center; padding: 40px; color: #666; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2c6e49; color: white; padding: 12px 24px; border-radius: 40px; font-size: 14px; z-index: 10000; animation: fadeInOut 2s ease; pointer-events: none; }
-        .toast.error { background: #c0392b; }
-        @keyframes fadeInOut { 0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            85% { opacity: 1; }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
-        @media (max-width: 700px) { .dash-btn { padding: 10px 18px; font-size: 0.9rem; } th, td { font-size: 12px; } }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,sans-serif}
+        body{background:linear-gradient(145deg,#0a3a2c,#1b5e3a);min-height:100vh;padding:16px}
+        .wrap{max-width:1100px;margin:0 auto}
+        .header{background:rgba(255,255,255,.12);border-radius:30px;padding:14px 22px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;color:#fff}
+        .logo-area{display:flex;align-items:center;gap:14px}
+        #logoBtn{width:56px;height:56px;border-radius:50%;background:#f4a261;border:3px solid rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;overflow:hidden;padding:0;flex-shrink:0}
+        #logoBtn img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+        .header h1{font-size:1.4rem;line-height:1.2}
+        .header p{font-size:.8rem;opacity:.8;margin-top:2px}
+        .menu{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:22px}
+        .menu-btn{background:#fff;border:none;padding:12px 22px;border-radius:50px;font-size:1rem;font-weight:700;color:#1e4a2f;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:.15s}
+        .menu-btn:hover,.menu-btn:active{background:#f4a261;color:#fff;transform:translateY(-2px)}
+        .card{background:#fff;border-radius:24px;padding:22px;box-shadow:0 16px 32px rgba(0,0,0,.18)}
+        h2{color:#1e4a2f;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+        .kelas-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+        .tab-btn{background:#e9ecef;border:none;padding:8px 20px;border-radius:30px;font-weight:700;cursor:pointer;transition:.15s}
+        .tab-btn.active,.tab-btn:hover{background:#2c6e49;color:#fff}
+        .toolbar{background:#f8f9fa;padding:12px;border-radius:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+        .toolbar label{font-weight:600;color:#333}
+        input[type=date],input[type=month],input[type=text]{padding:9px 13px;border-radius:12px;border:1px solid #ccc;font-size:.93rem}
+        .btn{padding:9px 18px;border-radius:12px;border:none;cursor:pointer;font-size:.93rem;font-weight:600;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+        .btn:hover{opacity:.85}
+        .btn-green{background:#2c6e49;color:#fff}
+        .btn-blue{background:#2980b9;color:#fff}
+        .btn-teal{background:#16a085;color:#fff}
+        .btn-red{background:#c0392b;color:#fff}
+        .btn-dark{background:#2c3e50;color:#fff}
+        .btn-sm{padding:5px 10px;font-size:.78rem}
+        .tbl-wrap{overflow-x:auto;margin-top:8px}
+        table{width:100%;border-collapse:collapse}
+        th,td{border:1px solid #ddd;padding:10px 8px;text-align:center;vertical-align:middle;font-size:.9rem}
+        th{background:#2c3e50;color:#fff}
+        tr:hover{background:#f5f5f5}
+        select.status-sel{padding:6px 10px;border-radius:20px;border:1px solid #ccc;font-size:.87rem;cursor:pointer}
+        .form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:#2c6e49;color:#fff;padding:11px 22px;border-radius:40px;font-size:.9rem;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+        .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        .toast.err{background:#c0392b}
+        .loading{text-align:center;padding:40px;color:#888;font-size:1rem}
+        .foot{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:16px}
+        @media(max-width:600px){th,td{font-size:.75rem;padding:7px 4px}.menu-btn{padding:10px 16px;font-size:.88rem}}
     </style>
 </head>
 <body>
-<div class="container">
+<div class="wrap">
     <div class="header">
-        <div class="logo-area"><div id="logoContainer" class="logo-placeholder"><i class="fas fa-mosque"></i></div><div class="title-text"><h1>Rumah Qur'an Lestari</h1><p>Sistem Absensi Santri • Multi-Device</p></div></div>
-        <div><i class="fas fa-cloud-upload-alt"></i> Tersinkronisasi Supabase</div>
+        <div class="logo-area">
+            <button id="logoBtn" title="Klik untuk ganti logo"><i class="fas fa-mosque"></i></button>
+            <div>
+                <h1>Rumah Qur'an Lestari</h1>
+                <p>Sistem Absensi Santri &bull; Multi-Device</p>
+            </div>
+        </div>
+        <div style="font-size:.85rem"><i class="fas fa-cloud"></i> Supabase Cloud</div>
     </div>
-    <div class="dashboard">
-        <button id="btnDataSiswa" class="dash-btn"><i class="fas fa-user-edit"></i> Edit Data Siswa</button>
-        <button id="btnKelasA" class="dash-btn"><i class="fas fa-chalkboard-user"></i> Kelas A</button>
-        <button id="btnKelasB" class="dash-btn"><i class="fas fa-chalkboard-user"></i> Kelas B</button>
-        <button id="btnKelasC" class="dash-btn"><i class="fas fa-chalkboard-user"></i> Kelas C</button>
-        <button id="btnKelasD" class="dash-btn"><i class="fas fa-chalkboard-user"></i> Kelas D</button>
-        <button id="btnLaporan" class="dash-btn"><i class="fas fa-chart-line"></i> Laporan</button>
+
+    <div class="menu">
+        <button class="menu-btn" id="mSiswa"><i class="fas fa-users-cog"></i> Data Siswa</button>
+        <button class="menu-btn" id="mA"><i class="fas fa-chalkboard-user"></i> Kelas A</button>
+        <button class="menu-btn" id="mB"><i class="fas fa-chalkboard-user"></i> Kelas B</button>
+        <button class="menu-btn" id="mC"><i class="fas fa-chalkboard-user"></i> Kelas C</button>
+        <button class="menu-btn" id="mD"><i class="fas fa-chalkboard-user"></i> Kelas D</button>
+        <button class="menu-btn" id="mLaporan"><i class="fas fa-chart-bar"></i> Laporan</button>
     </div>
-    <div id="mainPanel" class="card"><div id="dynamicContent" style="text-align:center; padding:40px;">✨ Klik menu di atas ✨</div></div>
+
+    <div class="card" id="panel">
+        <p style="text-align:center;padding:40px;color:#888">✨ Pilih menu di atas untuk memulai</p>
+    </div>
 </div>
 
+<div class="toast" id="toast"></div>
+<input type="file" id="logoFile" accept="image/*" style="display:none">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-    // ========== KONFIGURASI SUPABASE (dari diagnostik yang berhasil) ==========
-    const SUPABASE_URL = "https://dkahvnafwxyprouhblhj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrYWh2bmFmd3h5cHJvdWhibGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzA3MDUsImV4cCI6MjA5NDE0NjcwNX0.OgzDRxsPyrQeL8VwS6kgWkkzGAX-y9k-3VOWf3ti3r8";
-    // ============================================================
+// ── KONFIGURASI ──────────────────────────────────────────────
+const SB_URL = "https://dkahvnafwxyprouhblhj.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrYWh2bmFmd3h5cHJvdWhibGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzA3MDUsImV4cCI6MjA5NDE0NjcwNX0.OgzDRxsPyrQeL8VwS6kgWkkzGAX-y9k-3VOWf3ti3r8";
+// ─────────────────────────────────────────────────────────────
 
-    function showToast(msg, isError = false) {
-        const toast = document.createElement('div');
-        toast.className = 'toast' + (isError ? ' error' : '');
-        toast.textContent = (isError ? '⚠️ ' : '✅ ') + msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2500);
-    }
+const panel = document.getElementById("panel");
 
-    let supabase;
-    let isReady = false;
+// ── TOAST ─────────────────────────────────────────────────────
+let _tt;
+function toast(msg, err) {
+    const el = document.getElementById("toast");
+    el.textContent = (err ? "⚠️ " : "✅ ") + msg;
+    el.className = "toast show" + (err ? " err" : "");
+    clearTimeout(_tt);
+    _tt = setTimeout(() => { el.className = "toast"; }, 2500);
+}
 
-    try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        isReady = true;
-        console.log("Supabase siap");
-        showToast("Terhubung ke database");
-    } catch(e) {
-        console.error("Supabase error:", e);
-        showToast("Gagal koneksi", true);
-    }
+// ── SUPABASE ──────────────────────────────────────────────────
+let sb;
+try {
+    sb = supabase.createClient(SB_URL, SB_KEY);
+} catch(e) {
+    panel.innerHTML = `<p style="color:red;padding:20px">❌ Supabase error: ${e.message}</p>`;
+}
 
-    const KELAS = ["A","B","C","D"];
-    const NAMA_KELAS = { A:"Kelas A", B:"Kelas B", C:"Kelas C", D:"Kelas D" };
+// ── UTIL ──────────────────────────────────────────────────────
+function esc(s) {
+    return String(s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+function today() { return new Date().toISOString().slice(0,10); }
+function thisMonth() { return new Date().toISOString().slice(0,7); }
 
-    // ========== FUNGSI DATABASE ==========
-    async function loadSiswa() {
-        if (!isReady) return { A:[], B:[], C:[], D:[] };
-        const { data, error } = await supabase.from('siswa').select('id, nama, kelas').order('nama');
-        if (error) { console.error(error); showToast("Gagal load data", true); return { A:[], B:[], C:[], D:[] }; }
-        let result = { A:[], B:[], C:[], D:[] };
-        data.forEach(s => { if (result[s.kelas]) result[s.kelas].push({ id: s.id, nama: s.nama }); });
-        return result;
-    }
+// ── DB HELPERS ────────────────────────────────────────────────
+async function dbSiswa(kelas) {
+    const {data, error} = await sb.from("siswa").select("id,nama").eq("kelas", kelas).order("nama");
+    if (error) { toast("Gagal muat siswa: " + error.message, 1); return []; }
+    return data;
+}
+async function dbTambah(kelas, nama) {
+    const {data, error} = await sb.from("siswa").insert({kelas, nama}).select().single();
+    if (error) { toast("Gagal tambah: " + error.message, 1); return null; }
+    toast('"' + nama + '" ditambahkan');
+    return data;
+}
+async function dbHapus(id, nama) {
+    const {error} = await sb.from("siswa").delete().eq("id", id);
+    if (error) { toast("Gagal hapus: " + error.message, 1); return false; }
+    toast('"' + nama + '" dihapus');
+    return true;
+}
+async function dbGetAbsen(kelas, tanggal) {
+    const {data, error} = await sb.from("absensi").select("santri_id,status").eq("kelas", kelas).eq("tanggal", tanggal);
+    if (error) { toast("Gagal muat absensi: " + error.message, 1); return {}; }
+    const m = {};
+    data.forEach(r => m[r.santri_id] = r.status);
+    return m;
+}
+async function dbSimpan(records) {
+    const {error} = await sb.from("absensi").upsert(records, {onConflict: "kelas,tanggal,santri_id"});
+    if (error) { toast("Gagal simpan: " + error.message, 1); return false; }
+    toast("Tersimpan ✓");
+    return true;
+}
+async function dbRekap(kelas, bulan) {
+    const [y, m] = bulan.split("-");
+    const days = new Date(+y, +m, 0).getDate();
+    const start = y+"-"+m+"-01";
+    const end   = y+"-"+m+"-"+String(days).padStart(2,"0");
+    const [{data:siswa,error:e1}, {data:abs,error:e2}] = await Promise.all([
+        sb.from("siswa").select("id,nama").eq("kelas",kelas).order("nama"),
+        sb.from("absensi").select("santri_id,tanggal,status").eq("kelas",kelas).gte("tanggal",start).lte("tanggal",end)
+    ]);
+    if (e1||e2) { toast("Gagal muat rekap", 1); return null; }
+    const map = {};
+    (abs||[]).forEach(r => { if(!map[r.santri_id]) map[r.santri_id]={}; map[r.santri_id][r.tanggal]=r.status; });
+    const allDates = [];
+    for (let d=1; d<=days; d++) allDates.push(y+"-"+m+"-"+String(d).padStart(2,"0"));
+    const dates = allDates.filter(tgl => (siswa||[]).some(s => map[s.id]?.[tgl]));
+    return {siswa: siswa||[], map, dates};
+}
 
-    async function tambahSiswa(kelas, nama) {
-        if (!isReady) return null;
-        const { data, error } = await supabase.from('siswa').insert([{ kelas, nama: nama.trim() }]).select().single();
-        if (error) { showToast("Gagal tambah: " + error.message, true); return null; }
-        showToast(`"${nama}" ditambahkan ke ${NAMA_KELAS[kelas]}`);
-        return data;
-    }
+// ── HALAMAN: DATA SISWA ───────────────────────────────────────
+function pgSiswa() {
+    let kelas = "A";
+    function draw() {
+        panel.innerHTML =
+            '<h2><i class="fas fa-users-cog"></i> Data Siswa</h2>' +
+            '<div class="kelas-tabs" id="kTabs"></div>' +
+            '<div class="form-row">' +
+            '<input type="text" id="inNama" placeholder="Nama santri baru" style="flex:1;min-width:160px">' +
+            '<button class="btn btn-green" id="btnTambah"><i class="fas fa-plus"></i> Tambah</button>' +
+            '</div>' +
+            '<div id="tblWrap"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat...</div></div>';
 
-    async function hapusSiswa(id, nama) {
-        if (!isReady) return;
-        const { error } = await supabase.from('siswa').delete().eq('id', id);
-        if (error) { showToast("Gagal hapus: " + error.message, true); }
-        else showToast(`"${nama}" dihapus`);
-    }
-
-    async function getAbsensi(kelas, tanggal) {
-        if (!isReady) return {};
-        const { data, error } = await supabase.from('absensi').select('santri_id, status').eq('kelas', kelas).eq('tanggal', tanggal);
-        if (error) return {};
-        let map = {};
-        data.forEach(a => { map[a.santri_id] = a.status; });
-        return map;
-    }
-
-    async function updateStatus(kelas, tanggal, santriId, status) {
-        if (!isReady) return;
-        await supabase.from('absensi').upsert({
-            kelas, tanggal, santri_id: parseInt(santriId), status, updated_at: new Date().toISOString()
-        }, { onConflict: 'kelas,tanggal,santri_id' });
-        showToast("Tersimpan", false);
-    }
-
-    async function setBulkAbsensi(kelas, tanggal, dataMap) {
-        if (!isReady) return;
-        const records = [];
-        for (let [id, status] of Object.entries(dataMap)) {
-            records.push({ kelas, tanggal, santri_id: parseInt(id), status, updated_at: new Date().toISOString() });
-        }
-        await supabase.from('absensi').upsert(records, { onConflict: 'kelas,tanggal,santri_id' });
-        showToast("Semua tersimpan");
-    }
-
-    async function getRekap(kelas, bulanTahun) {
-        if (!isReady) return { siswa: [], data: {}, tgl: [] };
-        const [thn, bln] = bulanTahun.split("-");
-        const hari = new Date(thn, bln, 0).getDate();
-        let semuaTgl = [];
-        for (let d=1; d<=hari; d++) semuaTgl.push(`${thn}-${bln}-${String(d).padStart(2,'0')}`);
-        
-        const { data: siswaData } = await supabase.from('siswa').select('id, nama').eq('kelas', kelas);
-        if (!siswaData || !siswaData.length) return { siswa: [], data: {}, tgl: [] };
-        
-        const start = `${thn}-${bln}-01`;
-        const end = `${thn}-${bln}-${String(hari).padStart(2,'0')}`;
-        const { data: absData } = await supabase.from('absensi').select('santri_id, tanggal, status').eq('kelas', kelas).gte('tanggal', start).lte('tanggal', end);
-        
-        let statusMap = {};
-        if (absData) absData.forEach(a => { if (!statusMap[a.santri_id]) statusMap[a.santri_id] = {}; statusMap[a.santri_id][a.tanggal] = a.status; });
-        
-        const tglAdaData = semuaTgl.filter(tgl => siswaData.some(s => statusMap[s.id]?.[tgl]));
-        let dataAbsen = {};
-        for (let s of siswaData) {
-            dataAbsen[s.id] = {};
-            for (let tgl of tglAdaData) dataAbsen[s.id][tgl] = statusMap[s.id]?.[tgl] || "alpha";
-        }
-        return { siswa: siswaData.map(s => ({ id: s.id, nama: s.nama })), data: dataAbsen, tgl: tglAdaData };
-    }
-
-    // ========== UI RENDER ==========
-    const dynamicDiv = document.getElementById("dynamicContent");
-    let currentTanggal = new Date().toISOString().slice(0,10);
-
-    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-
-    async function showEditSiswa() {
-        dynamicDiv.innerHTML = `<h2><i class="fas fa-user-graduate"></i> Manajemen Data Siswa</h2><div class="class-buttons" id="kelasSelector"></div><div id="siswaContainer"><div class="loading">Memuat...</div></div>`;
-        let aktif = "A";
-        let dataGlobal = {};
-        
-        async function refresh() { dataGlobal = await loadSiswa(); renderSiswa(); }
-        function renderKelas() {
-            const cont = document.getElementById("kelasSelector");
-            if (!cont) return;
-            cont.innerHTML = "";
-            KELAS.forEach(k => {
-                let btn = document.createElement("button");
-                btn.textContent = NAMA_KELAS[k];
-                btn.classList.add("class-btn");
-                if (k === aktif) btn.classList.add("active");
-                btn.onclick = () => { aktif = k; renderKelas(); renderSiswa(); };
-                cont.appendChild(btn);
-            });
-        }
-        async function renderSiswa() {
-            const container = document.getElementById("siswaContainer");
-            if (!container) return;
-            const list = dataGlobal[aktif] || [];
-            container.innerHTML = `<div class="student-form"><input type="text" id="namaBaru" placeholder="Nama santri baru"><button id="btnTambah"><i class="fas fa-plus"></i> Tambah</button></div><td><thead><tr><th>No</th><th>Nama</th><th>Aksi</th></tr></thead><tbody id="siswaTbody"></tbody></table>`;
-            const tbody = document.getElementById("siswaTbody");
-            if (tbody) {
-                tbody.innerHTML = "";
-                list.forEach((s, i) => {
-                    let row = tbody.insertRow();
-                    row.insertCell(0).textContent = i+1;
-                    row.insertCell(1).textContent = s.nama;
-                    let btn = document.createElement("button");
-                    btn.innerHTML = '<i class="fas fa-trash"></i> Hapus';
-                    btn.className = "btn-small";
-                    btn.style.background = "#c0392b";
-                    btn.onclick = async () => { if (confirm(`Hapus ${s.nama}?`)) { await hapusSiswa(s.id, s.nama); await refresh(); renderSiswa(); } };
-                    row.insertCell(2).appendChild(btn);
-                });
-            }
-            const btnTambah = document.getElementById("btnTambah");
-            if (btnTambah) btnTambah.onclick = async () => {
-                const nama = document.getElementById("namaBaru")?.value.trim();
-                if (!nama) return showToast("Nama tidak boleh kosong", true);
-                await tambahSiswa(aktif, nama);
-                await refresh();
-                renderSiswa();
-                const inputNama = document.getElementById("namaBaru");
-                if (inputNama) inputNama.value = "";
-            };
-        }
-        renderKelas();
-        await refresh();
-    }
-
-    async function showAbsensi(kelas) {
-        dynamicDiv.innerHTML = `<h2><i class="fas fa-book-open"></i> Absensi ${NAMA_KELAS[kelas]}</h2>
-            <div class="date-picker"><label>Tanggal:</label><input type="date" id="tglAbsen" value="${currentTanggal}">
-            <button id="btnMuat"><i class="fas fa-sync-alt"></i> Muat</button>
-            <button id="btnSimpanSemua" style="background:#2c6e49;"><i class="fas fa-save"></i> Simpan Semua</button></div>
-            <div id="tabelAbsensi"><div class="loading">Memuat data siswa...</div></div>`;
-        
-        async function loadTable() {
-            const tglInput = document.getElementById("tglAbsen");
-            if (!tglInput) return;
-            const tanggal = tglInput.value;
-            currentTanggal = tanggal;
-            const semuaSiswa = await loadSiswa();
-            const siswa = semuaSiswa[kelas] || [];
-            const absMap = await getAbsensi(kelas, tanggal);
-            const wrap = document.getElementById("tabelAbsensi");
-            if (!wrap) return;
-            if (siswa.length === 0) { wrap.innerHTML = "<p>Belum ada siswa. Tambah di Edit Data Siswa.</p>"; return; }
-            let html = `<table><thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
-            siswa.forEach((s, i) => {
-                let st = absMap[s.id] || "hadir";
-                html += `<tr>
-                    <td>${i+1}</td>
-                    <td>${escapeHtml(s.nama)}</td>
-                    <td><select id="stat_${s.id}" class="status-select">
-                        <option value="hadir" ${st === 'hadir' ? 'selected' : ''}>✅ Hadir</option>
-                        <option value="sakit" ${st === 'sakit' ? 'selected' : ''}>🤒 Sakit</option>
-                        <option value="izin" ${st === 'izin' ? 'selected' : ''}>📝 Izin</option>
-                        <option value="alpha" ${st === 'alpha' ? 'selected' : ''}>❌ Alpha</option>
-                    </select></td>
-                    <td><button class="btn-small simpanSatu" data-id="${s.id}"><i class="fas fa-save"></i> Simpan</button></td>
-                </tr>`;
-            });
-            html += `</tbody></table>`;
-            wrap.innerHTML = html;
-            document.querySelectorAll(".simpanSatu").forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.getAttribute("data-id");
-                    const select = document.getElementById(`stat_${id}`);
-                    if (select) { await updateStatus(kelas, tanggal, id, select.value); loadTable(); }
-                };
-            });
-        }
-        async function simpanSemua() {
-            const tglInput = document.getElementById("tglAbsen");
-            if (!tglInput) return;
-            const tanggal = tglInput.value;
-            const semuaSiswa = await loadSiswa();
-            const siswa = semuaSiswa[kelas] || [];
-            const newMap = {};
-            for (let s of siswa) {
-                const sel = document.getElementById(`stat_${s.id}`);
-                if (sel) newMap[s.id] = sel.value;
-            }
-            if (Object.keys(newMap).length) { await setBulkAbsensi(kelas, tanggal, newMap); loadTable(); }
-            else showToast("Tidak ada perubahan", true);
-        }
-        document.getElementById("btnMuat")?.addEventListener("click", loadTable);
-        document.getElementById("btnSimpanSemua")?.addEventListener("click", simpanSemua);
-        loadTable();
-    }
-
-    async function showLaporan() {
-        const bulanSekarang = new Date().toISOString().slice(0,7);
-        dynamicDiv.innerHTML = `<h2><i class="fas fa-chart-pie"></i> Laporan Bulanan</h2>
-            <div class="class-buttons" id="kelasLapSelector"></div>
-            <div class="date-picker"><label>Bulan & Tahun:</label><input type="month" id="bulanLap" value="${bulanSekarang}">
-            <button id="btnTampilkan"><i class="fas fa-chart-bar"></i> Tampilkan Laporan Kelas</button>
-            <button id="btnRingkasan" style="background:#16a085;"><i class="fas fa-chart-line"></i> Ringkasan Semua Kelas</button></div>
-            <div id="hasilLaporan"></div>
-            <div class="footer-actions"><button id="btnCetak"><i class="fas fa-print"></i> Cetak</button></div>`;
-        
-        let aktifKelas = "A";
-        function renderKelas() {
-            const cont = document.getElementById("kelasLapSelector");
-            if (!cont) return;
-            cont.innerHTML = "";
-            KELAS.forEach(k => {
-                let btn = document.createElement("button");
-                btn.textContent = NAMA_KELAS[k];
-                btn.classList.add("class-btn");
-                if (k === aktifKelas) btn.classList.add("active");
-                btn.onclick = () => { aktifKelas = k; renderKelas(); tampilkanLaporan(); };
-                cont.appendChild(btn);
-            });
-        }
-        async function tampilkanLaporan() {
-            const bulan = document.getElementById("bulanLap")?.value;
-            if (!bulan) return;
-            const output = document.getElementById("hasilLaporan");
-            if (output) output.innerHTML = `<div class="loading">Memuat...</div>`;
-            const { siswa, data, tgl } = await getRekap(aktifKelas, bulan);
-            if (siswa.length === 0 || tgl.length === 0) {
-                if (output) output.innerHTML = `<p>Belum ada data absensi untuk ${NAMA_KELAS[aktifKelas]} pada bulan ${bulan}.</p>`;
-                return;
-            }
-            let html = `<h3>📊 Laporan ${NAMA_KELAS[aktifKelas]} - ${bulan}</h3><div style="overflow-x:auto;"><table border="1"><thead><tr><th>No</th><th>Nama</th>`;
-            tgl.forEach(t => html += `<th>${t.slice(5)}</th>`);
-            html += `<th>H</th><th>S</th><th>I</th><th>A</th></tr></thead><tbody>`;
-            for (let s of siswa) {
-                let h=0, sk=0, iz=0, al=0;
-                html += `<tr><td>${siswa.indexOf(s)+1}</td><td>${escapeHtml(s.nama)}</td>`;
-                for (let t of tgl) {
-                    let st = data[s.id][t];
-                    if (st === "hadir") { html += `<td>✅</td>`; h++; }
-                    else if (st === "sakit") { html += `<td>🤒</td>`; sk++; }
-                    else if (st === "izin") { html += `<td>📝</td>`; iz++; }
-                    else { html += `<td>❌</td>`; al++; }
-                }
-                html += `<td>${h}</td><td>${sk}</td><td>${iz}</td><td>${al}</td></tr>`;
-            }
-            html += `</tbody></table></div><p><small>✅ Hadir  🤒 Sakit  📝 Izin  ❌ Alpha</small></p>`;
-            if (output) output.innerHTML = html;
-        }
-        async function ringkasanSemua() {
-            const bulan = document.getElementById("bulanLap")?.value;
-            if (!bulan) return;
-            const output = document.getElementById("hasilLaporan");
-            if (output) output.innerHTML = `<div class="loading">Memuat ringkasan...</div>`;
-            let semuaRekap = {};
-            for (let k of KELAS) {
-                const { siswa, tgl } = await getRekap(k, bulan);
-                semuaRekap[k] = { jml: siswa.length, totalHari: tgl.length };
-            }
-            let html = `<h3>📋 RINGKASAN SEMUA KELAS - ${bulan}</h3><table border="1"><thead><tr><th>Kelas</th><th>Jml Santri</th><th>Total Hari Absensi</th></table></thead><tbody>`;
-            for (let k of KELAS) {
-                html += `<tr><td>${NAMA_KELAS[k]}</td><td>${semuaRekap[k].jml}</td><td>${semuaRekap[k].totalHari}</td></tr>`;
-            }
-            html += `</tbody></table><p><small>Catatan: Hanya menampilkan hari yang sudah ada absensi.</small></p>`;
-            if (output) output.innerHTML = html;
-        }
-        renderKelas();
-        document.getElementById("btnTampilkan")?.addEventListener("click", tampilkanLaporan);
-        document.getElementById("btnRingkasan")?.addEventListener("click", ringkasanSemua);
-        document.getElementById("btnCetak")?.addEventListener("click", () => {
-            const content = document.getElementById("hasilLaporan")?.cloneNode(true);
-            if (content) { let w = window.open('', '_blank'); w.document.write(`<html><head><title>Laporan</title><style>table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:6px;text-align:center}</style></head><body>${content.innerHTML}</body></html>`); w.document.close(); w.print(); }
+        // Kelas tabs
+        const tabs = document.getElementById("kTabs");
+        ["A","B","C","D"].forEach(k => {
+            const b = document.createElement("button");
+            b.className = "tab-btn" + (k===kelas?" active":"");
+            b.textContent = "Kelas " + k;
+            b.addEventListener("click", () => { kelas=k; draw(); });
+            tabs.appendChild(b);
         });
-        tampilkanLaporan();
-    }
 
-    // ========== INIT ==========
-    function initApp() {
-        console.log("Init aplikasi...");
-        document.getElementById("btnDataSiswa").onclick = () => showEditSiswa();
-        document.getElementById("btnKelasA").onclick = () => showAbsensi("A");
-        document.getElementById("btnKelasB").onclick = () => showAbsensi("B");
-        document.getElementById("btnKelasC").onclick = () => showAbsensi("C");
-        document.getElementById("btnKelasD").onclick = () => showAbsensi("D");
-        document.getElementById("btnLaporan").onclick = () => showLaporan();
-        showToast("Aplikasi siap! Klik menu", false);
+        document.getElementById("btnTambah").addEventListener("click", async () => {
+            const inp = document.getElementById("inNama");
+            const nama = inp.value.trim();
+            if (!nama) return toast("Nama tidak boleh kosong", 1);
+            inp.disabled = true;
+            await dbTambah(kelas, nama);
+            inp.value = "";
+            inp.disabled = false;
+            await loadTbl();
+        });
+
+        loadTbl();
     }
-    
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initApp);
-    } else {
-        initApp();
+    async function loadTbl() {
+        const wrap = document.getElementById("tblWrap");
+        if (!wrap) return;
+        wrap.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
+        const list = await dbSiswa(kelas);
+        if (!list.length) { wrap.innerHTML='<p style="padding:20px;color:#888">Belum ada siswa. Tambah di atas.</p>'; return; }
+        wrap.innerHTML =
+            '<div class="tbl-wrap"><table>' +
+            '<thead><tr><th>No</th><th>Nama</th><th>Aksi</th></tr></thead>' +
+            '<tbody>' + list.map((s,i) =>
+                '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(s.nama)+'</td>' +
+                '<td><button class="btn btn-red btn-sm hapus-btn" data-id="'+s.id+'" data-nama="'+esc(s.nama)+'">'+
+                '<i class="fas fa-trash"></i> Hapus</button></td></tr>'
+            ).join("") + '</tbody></table></div>';
+        wrap.querySelectorAll(".hapus-btn").forEach(b => {
+            b.addEventListener("click", async () => {
+                if (!confirm('Hapus "'+b.dataset.nama+'"?')) return;
+                await dbHapus(b.dataset.id, b.dataset.nama);
+                await loadTbl();
+            });
+        });
     }
+    draw();
+}
+
+// ── HALAMAN: ABSENSI ─────────────────────────────────────────
+function pgAbsen(kelas) {
+    let tgl = today();
+    function draw() {
+        panel.innerHTML =
+            '<h2><i class="fas fa-clipboard-check"></i> Absensi Kelas '+kelas+'</h2>' +
+            '<div class="toolbar">' +
+            '<label>Tanggal:</label>' +
+            '<input type="date" id="tglPick" value="'+tgl+'">' +
+            '<button class="btn btn-blue" id="btnMuat"><i class="fas fa-sync-alt"></i> Muat</button>' +
+            '<button class="btn btn-green" id="btnSimpanSemua"><i class="fas fa-save"></i> Simpan Semua</button>' +
+            '</div>' +
+            '<div id="absWrap"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat...</div></div>';
+
+        document.getElementById("btnMuat").addEventListener("click", () => {
+            tgl = document.getElementById("tglPick").value || tgl;
+            loadAbsen();
+        });
+        document.getElementById("btnSimpanSemua").addEventListener("click", async () => {
+            tgl = document.getElementById("tglPick").value || tgl;
+            const rows = document.querySelectorAll("[data-sid]");
+            if (!rows.length) return toast("Belum ada data", 1);
+            const records = [...rows].map(r => ({
+                kelas, tanggal: tgl,
+                santri_id: parseInt(r.dataset.sid),
+                status: document.getElementById("sel_"+r.dataset.sid)?.value || "hadir",
+                updated_at: new Date().toISOString()
+            }));
+            await dbSimpan(records);
+            loadAbsen();
+        });
+        loadAbsen();
+    }
+    async function loadAbsen() {
+        const wrap = document.getElementById("absWrap");
+        if (!wrap) return;
+        wrap.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
+        const [siswa, absMap] = await Promise.all([dbSiswa(kelas), dbGetAbsen(kelas, tgl)]);
+        if (!siswa.length) { wrap.innerHTML='<p style="padding:20px;color:#888">Belum ada siswa. Tambah di menu Data Siswa.</p>'; return; }
+        const STATUS = [{v:"hadir",l:"✅ Hadir"},{v:"sakit",l:"🤒 Sakit"},{v:"izin",l:"📝 Izin"},{v:"alpha",l:"❌ Alpha"}];
+        wrap.innerHTML =
+            '<div class="tbl-wrap"><table>' +
+            '<thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead>' +
+            '<tbody>' + siswa.map((s,i) => {
+                const st = absMap[s.id] || "hadir";
+                const opts = STATUS.map(x => '<option value="'+x.v+'"'+(st===x.v?" selected":"")+'>'+x.l+'</option>').join("");
+                return '<tr data-sid="'+s.id+'"><td>'+(i+1)+'</td><td style="text-align:left">'+esc(s.nama)+'</td>'+
+                    '<td><select class="status-sel" id="sel_'+s.id+'">'+opts+'</select></td>'+
+                    '<td><button class="btn btn-green btn-sm simpan1-btn" data-sid="'+s.id+'">'+
+                    '<i class="fas fa-save"></i> Simpan</button></td></tr>';
+            }).join("") + '</tbody></table></div>';
+        wrap.querySelectorAll(".simpan1-btn").forEach(b => {
+            b.addEventListener("click", async () => {
+                const sid = parseInt(b.dataset.sid);
+                const sel = document.getElementById("sel_"+sid);
+                if (!sel) return;
+                await dbSimpan([{kelas, tanggal:tgl, santri_id:sid, status:sel.value, updated_at:new Date().toISOString()}]);
+                loadAbsen();
+            });
+        });
+    }
+    draw();
+}
+
+// ── HALAMAN: LAPORAN ─────────────────────────────────────────
+function pgLaporan() {
+    let kelas = "A", bulan = thisMonth();
+    function draw() {
+        panel.innerHTML =
+            '<h2><i class="fas fa-chart-pie"></i> Laporan Bulanan</h2>' +
+            '<div class="kelas-tabs" id="kTabsLap"></div>' +
+            '<div class="toolbar">' +
+            '<label>Bulan:</label><input type="month" id="bulanPick" value="'+bulan+'">' +
+            '<button class="btn btn-blue" id="btnTampil"><i class="fas fa-chart-bar"></i> Tampilkan Kelas</button>' +
+            '<button class="btn btn-teal" id="btnTampilSemua"><i class="fas fa-chart-line"></i> Semua Kelas</button>' +
+            '</div>' +
+            '<div id="lapOut"></div>' +
+            '<div class="foot"><button class="btn btn-dark" id="btnCetak"><i class="fas fa-print"></i> Cetak</button></div>';
+
+        const tabs = document.getElementById("kTabsLap");
+        ["A","B","C","D"].forEach(k => {
+            const b = document.createElement("button");
+            b.className = "tab-btn"+(k===kelas?" active":"");
+            b.textContent = "Kelas "+k;
+            b.addEventListener("click", () => { kelas=k; draw(); tampilKelas(); });
+            tabs.appendChild(b);
+        });
+
+        document.getElementById("btnTampil").addEventListener("click", tampilKelas);
+        document.getElementById("btnTampilSemua").addEventListener("click", tampilSemua);
+        document.getElementById("btnCetak").addEventListener("click", () => {
+            const c = document.getElementById("lapOut")?.innerHTML;
+            if (!c || c.includes("Belum") || c.includes("Memuat") || c.includes("fa-spin")) return toast("Tampilkan laporan dulu", 1);
+            const w = window.open("","_blank");
+            w.document.write('<!DOCTYPE html><html><head><title>Laporan Absensi</title><style>body{font-family:sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px 8px;text-align:center}th{background:#2c3e50;color:#fff}h3{text-align:center}</style></head><body>'+c+'</body></html>');
+            w.document.close(); w.print();
+        });
+    }
+    async function tampilKelas() {
+        bulan = document.getElementById("bulanPick")?.value || bulan;
+        const out = document.getElementById("lapOut");
+        if (!out) return;
+        out.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat laporan...</div>';
+        const r = await dbRekap(kelas, bulan);
+        if (!r || !r.siswa.length) { out.innerHTML='<p style="padding:16px;color:#888">Belum ada data untuk Kelas '+kelas+' bulan '+bulan+'.</p>'; return; }
+        if (!r.dates.length) { out.innerHTML='<p style="padding:16px;color:#888">Belum ada sesi absensi tercatat bulan '+bulan+'.</p>'; return; }
+        const ICON = {hadir:"✅",sakit:"🤒",izin:"📝",alpha:"❌"};
+        let html = '<h3 style="margin:12px 0">📊 Kelas '+kelas+' — '+bulan+'</h3><div class="tbl-wrap"><table>' +
+            '<thead><tr><th>No</th><th>Nama</th>'+r.dates.map(d=>'<th>'+d.slice(5)+'</th>').join('')+'<th>H</th><th>S</th><th>I</th><th>A</th></tr></thead><tbody>';
+        r.siswa.forEach((s,i) => {
+            let h=0,sk=0,iz=0,al=0;
+            const cells = r.dates.map(d => {
+                const st = r.map[s.id]?.[d] || "alpha";
+                if(st==="hadir")h++; else if(st==="sakit")sk++; else if(st==="izin")iz++; else al++;
+                return '<td>'+ICON[st]+'</td>';
+            }).join("");
+            html += '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(s.nama)+'</td>'+cells+'<td>'+h+'</td><td>'+sk+'</td><td>'+iz+'</td><td>'+al+'</td></tr>';
+        });
+        html += '</tbody></table></div><p style="margin-top:8px;font-size:.8rem">✅ Hadir &nbsp;🤒 Sakit &nbsp;📝 Izin &nbsp;❌ Alpha</p>';
+        out.innerHTML = html;
+    }
+    async function tampilSemua() {
+        bulan = document.getElementById("bulanPick")?.value || bulan;
+        const out = document.getElementById("lapOut");
+        if (!out) return;
+        out.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat semua kelas...</div>';
+        const results = await Promise.all(["A","B","C","D"].map(k => dbRekap(k, bulan)));
+        let html = '<h3 style="margin:12px 0">📋 Ringkasan Semua Kelas — '+bulan+'</h3><div class="tbl-wrap"><table>' +
+            '<thead><tr><th>Kelas</th><th>Jml Santri</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpha</th></tr></thead><tbody>';
+        ["A","B","C","D"].forEach((k,i) => {
+            const r = results[i];
+            if (!r) { html+='<tr><td>Kelas '+k+'</td><td colspan="5" style="color:red">Gagal muat</td></tr>'; return; }
+            let h=0,sk=0,iz=0,al=0;
+            r.siswa.forEach(s => r.dates.forEach(d => {
+                const st=r.map[s.id]?.[d]||"alpha";
+                if(st==="hadir")h++; else if(st==="sakit")sk++; else if(st==="izin")iz++; else al++;
+            }));
+            html+='<tr><td>Kelas '+k+'</td><td>'+r.siswa.length+'</td><td>'+h+'</td><td>'+sk+'</td><td>'+iz+'</td><td>'+al+'</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        out.innerHTML = html;
+    }
+    draw();
+}
+
+// ── LOGO ─────────────────────────────────────────────────────
+(function(){
+    const btn  = document.getElementById("logoBtn");
+    const file = document.getElementById("logoFile");
+    try {
+        const saved = localStorage.getItem("rql_logo");
+        if (saved) btn.innerHTML = '<img src="'+saved+'">';
+    } catch(e) {}
+    btn.addEventListener("click", () => file.click());
+    file.addEventListener("change", e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            btn.innerHTML = '<img src="'+ev.target.result+'">';
+            try { localStorage.setItem("rql_logo", ev.target.result); } catch(e) {}
+            toast("Logo berhasil diubah");
+        };
+        reader.readAsDataURL(f);
+        file.value = "";
+    });
+})();
+
+// ── BIND MENU ────────────────────────────────────────────────
+document.getElementById("mSiswa").addEventListener("click", pgSiswa);
+document.getElementById("mA").addEventListener("click", () => pgAbsen("A"));
+document.getElementById("mB").addEventListener("click", () => pgAbsen("B"));
+document.getElementById("mC").addEventListener("click", () => pgAbsen("C"));
+document.getElementById("mD").addEventListener("click", () => pgAbsen("D"));
+document.getElementById("mLaporan").addEventListener("click", pgLaporan);
 </script>
 </body>
 </html>
