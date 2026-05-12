@@ -368,26 +368,59 @@ function pgLaporan() {
     draw();
 }
 
-// ── LOGO ─────────────────────────────────────────────────────
+// ── LOGO (Supabase Storage — sinkron semua device) ────────────
+const LOGO_BUCKET = "app-assets";
+const LOGO_PATH   = "logo/rql_logo";
+
+async function loadLogo() {
+    const btn = document.getElementById("logoBtn");
+    try {
+        // Tambahkan cache-buster agar browser tidak pakai versi lama
+        const { data } = sb.storage.from(LOGO_BUCKET).getPublicUrl(LOGO_PATH);
+        if (data?.publicUrl) {
+            const img = new Image();
+            img.onload = () => { btn.innerHTML = '<img src="'+data.publicUrl+'?t='+Date.now()+'">'; };
+            img.onerror = () => {}; // Belum ada logo, biarkan icon default
+            img.src = data.publicUrl + "?t=" + Date.now();
+        }
+    } catch(e) {}
+}
+
 (function(){
     const btn  = document.getElementById("logoBtn");
     const file = document.getElementById("logoFile");
-    try {
-        const saved = localStorage.getItem("rql_logo");
-        if (saved) btn.innerHTML = '<img src="'+saved+'">';
-    } catch(e) {}
+
+    // Muat logo dari Supabase saat halaman dibuka
+    loadLogo();
+
     btn.addEventListener("click", () => file.click());
-    file.addEventListener("change", e => {
+    file.addEventListener("change", async e => {
         const f = e.target.files[0];
         if (!f) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            btn.innerHTML = '<img src="'+ev.target.result+'">';
-            try { localStorage.setItem("rql_logo", ev.target.result); } catch(e) {}
-            toast("Logo berhasil diubah");
-        };
-        reader.readAsDataURL(f);
         file.value = "";
+
+        // Validasi ukuran (max 1MB)
+        if (f.size > 1024 * 1024) return toast("Logo maksimal 1MB", 1);
+
+        toast("Mengupload logo...");
+        btn.style.opacity = "0.5";
+
+        const { error } = await sb.storage
+            .from(LOGO_BUCKET)
+            .upload(LOGO_PATH, f, {
+                upsert: true,          // Timpa jika sudah ada
+                contentType: f.type
+            });
+
+        btn.style.opacity = "1";
+
+        if (error) {
+            toast("Gagal upload logo: " + error.message, 1);
+            return;
+        }
+
+        await loadLogo();
+        toast("Logo berhasil disimpan di semua device ✓");
     });
 })();
 
