@@ -2,18 +2,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rumah Qur'an Lestari - Absensi Santri</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(145deg, #0a3a2c 0%, #1b5e3a 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1300px; margin: 0 auto; }
         .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border-radius: 40px; padding: 15px 25px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; color: white; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
-        .logo-img { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; background: white; padding: 5px; cursor: pointer; }
-        .logo-placeholder { width: 60px; height: 60px; background: #f4a261; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
+        .logo-placeholder { width: 60px; height: 60px; background: #f4a261; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; }
         .title-text h1 { font-size: 1.6rem; }
         .dashboard { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; margin-bottom: 35px; }
         .dash-btn { background: white; border: none; padding: 14px 28px; border-radius: 60px; font-size: 1.1rem; font-weight: bold; color: #1e4a2f; cursor: pointer; transition: 0.2s; box-shadow: 0 6px 14px rgba(0,0,0,0.2); display: inline-flex; align-items: center; gap: 10px; }
@@ -30,22 +29,25 @@
         th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; vertical-align: middle; }
         th { background: #2c3e50; color: white; }
         .status-select { padding: 6px; border-radius: 20px; }
-        .btn-small { padding: 5px 10px; font-size: 0.75rem; margin: 2px; }
-        .alert { background: #d1e7dd; padding: 12px; border-radius: 16px; margin: 10px 0; display: none; }
+        .btn-small { padding: 5px 10px; font-size: 0.75rem; margin: 2px; background: #c0392b; }
         .student-form { display: flex; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
         .footer-actions { margin-top: 20px; display: flex; gap: 15px; justify-content: flex-end; }
-        @media (max-width: 700px) { .dash-btn { padding: 10px 18px; font-size: 0.9rem; } th, td { font-size: 12px; } }
         .loading { text-align: center; padding: 40px; color: #666; }
-        
-        /* Toast notification */
-        .toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2c6e49; color: white; padding: 12px 24px; border-radius: 40px; font-size: 14px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: fadeInOut 2s ease; pointer-events: none; }
-        @keyframes fadeInOut { 0% { opacity: 0; transform: translateX(-50%) translateY(20px); } 15% { opacity: 1; transform: translateX(-50%) translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2c6e49; color: white; padding: 12px 24px; border-radius: 40px; font-size: 14px; z-index: 10000; animation: fadeInOut 2s ease; pointer-events: none; }
+        .toast.error { background: #c0392b; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <div class="logo-area"><div id="logoContainer" class="logo-placeholder"><i class="fas fa-mosque"></i></div><div class="title-text"><h1>Rumah Qur'an Lestari</h1><p>Sistem Absensi Santri • Multi-Device</p></div></div>
+        <div class="logo-area">
+            <div id="logoContainer" class="logo-placeholder"><i class="fas fa-mosque"></i></div>
+            <div class="title-text"><h1>Rumah Qur'an Lestari</h1><p>Sistem Absensi Santri • Multi-Device</p></div>
+        </div>
         <div><i class="fas fa-cloud-upload-alt"></i> Tersinkronisasi Supabase</div>
     </div>
     <div class="dashboard">
@@ -56,7 +58,9 @@
         <button id="btnKelasD" class="dash-btn"><i class="fas fa-chalkboard-user"></i> Kelas D</button>
         <button id="btnLaporan" class="dash-btn"><i class="fas fa-chart-line"></i> Laporan</button>
     </div>
-    <div id="mainPanel" class="card"><div id="dynamicContent"><p style="text-align:center; padding:40px;">✨ Klik menu di atas ✨</p></div></div>
+    <div id="mainPanel" class="card">
+        <div id="dynamicContent" style="text-align:center; padding:40px;">✨ Klik menu di atas ✨</div>
+    </div>
 </div>
 
 <script>
@@ -65,429 +69,337 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrYWh2bmFmd3h5cHJvdWhibGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzA3MDUsImV4cCI6MjA5NDE0NjcwNX0.OgzDRxsPyrQeL8VwS6kgWkkzGAX-y9k-3VOWf3ti3r8";
     // ==========================================
 
-    // ===== SIMPLE TOAST NOTIFICATION (tidak perlu console) =====
+    // Toast notification
     function showToast(msg, isError = false) {
         const toast = document.createElement('div');
-        toast.className = 'toast-msg';
-        toast.style.background = isError ? '#c0392b' : '#2c6e49';
-        toast.innerHTML = (isError ? '⚠️ ' : '✅ ') + msg;
+        toast.className = 'toast' + (isError ? ' error' : '');
+        toast.textContent = (isError ? '⚠️ ' : '✅ ') + msg;
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
+        setTimeout(() => toast.remove(), 2500);
     }
 
-    // ===== DEBUG PANEL (ketuk pojok kanan bawah 3x) =====
-    const _dbg = document.createElement('div');
-    _dbg.id = 'debugPanel';
-    _dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.92);color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:9999;display:none;border-top:2px solid #0f0;';
-    document.body.appendChild(_dbg);
-    let _dbgVisible = false;
-
-    let _tapCount = 0;
-    let _tapTimer = null;
-    document.addEventListener('click', e => {
-        if (e.clientX > window.innerWidth * 0.8 && e.clientY > window.innerHeight * 0.8) {
-            _tapCount++;
-            if (_tapTimer) clearTimeout(_tapTimer);
-            _tapTimer = setTimeout(() => { _tapCount = 0; }, 500);
-            if (_tapCount >= 3) {
-                _tapCount = 0;
-                _dbgVisible = !_dbgVisible;
-                _dbg.style.display = _dbgVisible ? 'block' : 'none';
-                showToast(_dbgVisible ? 'Debug panel dibuka' : 'Debug panel ditutup');
-            }
-        }
-    });
-
-    function dbg(msg, isError = false) {
-        const line = document.createElement('div');
-        line.style.color = isError ? '#ff6666' : '#88ff88';
-        line.style.borderBottom = '1px solid #333';
-        line.style.padding = '2px 0';
-        line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
-        _dbg.appendChild(line);
-        _dbg.scrollTop = _dbg.scrollHeight;
-        console.log(msg);
-        if (isError) showToast(msg, true);
+    // Inisialisasi Supabase
+    let supabase;
+    let isReady = false;
+    
+    try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        isReady = true;
+        console.log("Supabase siap");
+        showToast("Terhubung ke database");
+    } catch(e) {
+        console.error("Supabase error:", e);
+        showToast("Gagal koneksi ke database", true);
+        document.getElementById("dynamicContent").innerHTML = `<p style="color:red;">⚠️ Gagal koneksi: ${e.message}</p>`;
     }
 
-    window.onerror = (msg, src, line) => dbg('JS ERROR: ' + msg + ' (line ' + line + ')', true);
-    window.addEventListener('unhandledrejection', e => dbg('PROMISE ERROR: ' + (e.reason?.message || e.reason), true));
-    // ===========================================================
-
-    let supabase, isSupabaseReady = false;
-
-    (function initSupabase() {
-        try {
-            if (!window.supabase) throw new Error("Library Supabase tidak termuat. Cek koneksi internet.");
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            isSupabaseReady = true;
-            dbg('✅ Supabase client initialized');
-            showToast('Terhubung ke database!');
-        } catch(e) {
-            dbg('❌ Gagal init Supabase: ' + e.message, true);
-            document.getElementById("dynamicContent").innerHTML = `<p style="color:red;padding:20px;">⚠️ Gagal koneksi Supabase: ${e.message}</p>`;
-        }
-    })();
-
-    const KELAS_IDS = ["A","B","C","D"];
+    const KELAS = ["A","B","C","D"];
     const NAMA_KELAS = { A:"Kelas A", B:"Kelas B", C:"Kelas C", D:"Kelas D" };
 
-    // ========== FUNGSI CRUD SISWA ==========
-    async function loadSiswaPerKelas() {
-        if (!isSupabaseReady) { dbg('loadSiswa: Supabase tidak siap', true); return { A:[], B:[], C:[], D:[] }; }
-        dbg('Memuat data siswa...');
+    // ========== FUNGSI DATABASE ==========
+    async function loadSiswa() {
+        if (!isReady) return { A:[], B:[], C:[], D:[] };
         const { data, error } = await supabase.from('siswa').select('id, nama, kelas').order('nama');
-        if (error) { dbg('Load siswa error: ' + error.message, true); return { A:[], B:[], C:[], D:[] }; }
+        if (error) { console.error(error); showToast("Gagal load data", true); return { A:[], B:[], C:[], D:[] }; }
         let result = { A:[], B:[], C:[], D:[] };
         data.forEach(s => { if (result[s.kelas]) result[s.kelas].push({ id: s.id, nama: s.nama }); });
-        dbg(`Data siswa dimuat: A:${result.A.length}, B:${result.B.length}, C:${result.C.length}, D:${result.D.length}`);
         return result;
     }
 
     async function tambahSiswa(kelas, nama) {
-        if (!isSupabaseReady) return null;
-        dbg(`Tambah siswa: ${nama} (kelas ${kelas})`);
+        if (!isReady) return null;
         const { data, error } = await supabase.from('siswa').insert([{ kelas, nama: nama.trim() }]).select().single();
-        if (error) { dbg('Tambah siswa error: ' + error.message, true); showToast('Gagal: ' + error.message, true); return null; }
-        dbg(`Siswa ${nama} berhasil ditambahkan (ID: ${data.id})`);
-        showToast(`"${nama}" ditambahkan ke ${NAMA_KELAS[kelas]}`);
-        return { id: data.id, nama: data.nama };
+        if (error) { showToast("Gagal tambah: " + error.message, true); return null; }
+        showToast(`"${nama}" ditambahkan`);
+        return data;
     }
 
-    async function hapusSiswa(siswaId, nama) {
-        if (!isSupabaseReady) return;
-        dbg(`Hapus siswa ID: ${siswaId} (${nama})`);
-        const { error } = await supabase.from('siswa').delete().eq('id', siswaId);
-        if (error) { dbg('Hapus siswa error: ' + error.message, true); showToast('Gagal hapus: ' + error.message, true); }
-        else { showToast(`"${nama}" telah dihapus`); }
+    async function hapusSiswa(id, nama) {
+        if (!isReady) return;
+        const { error } = await supabase.from('siswa').delete().eq('id', id);
+        if (error) { showToast("Gagal hapus: " + error.message, true); }
+        else showToast(`"${nama}" dihapus`);
     }
 
     async function getAbsensi(kelas, tanggal) {
-        if (!isSupabaseReady) return {};
+        if (!isReady) return {};
         const { data, error } = await supabase.from('absensi').select('santri_id, status').eq('kelas', kelas).eq('tanggal', tanggal);
-        if (error) { dbg('Get absensi error: ' + error.message, true); return {}; }
+        if (error) return {};
         let map = {};
         data.forEach(a => { map[a.santri_id] = a.status; });
         return map;
     }
 
     async function updateStatus(kelas, tanggal, santriId, status) {
-        if (!isSupabaseReady) return;
-        dbg(`Update status: santri ${santriId} -> ${status}`);
-        const { error } = await supabase.from('absensi').upsert({
+        if (!isReady) return;
+        await supabase.from('absensi').upsert({
             kelas, tanggal, santri_id: parseInt(santriId), status, updated_at: new Date().toISOString()
         }, { onConflict: 'kelas,tanggal,santri_id' });
-        if (error) dbg('Update status error: ' + error.message, true);
-        else dbg(`Status berhasil disimpan`);
     }
 
     async function setBulkAbsensi(kelas, tanggal, dataMap) {
-        if (!isSupabaseReady) return;
-        dbg(`Menyimpan ${Object.keys(dataMap).length} data absensi untuk ${kelas} tgl ${tanggal}`);
+        if (!isReady) return;
         const records = [];
-        for (let [santriId, status] of Object.entries(dataMap)) {
-            records.push({ kelas, tanggal, santri_id: parseInt(santriId), status, updated_at: new Date().toISOString() });
+        for (let [id, status] of Object.entries(dataMap)) {
+            records.push({ kelas, tanggal, santri_id: parseInt(id), status, updated_at: new Date().toISOString() });
         }
-        const { error } = await supabase.from('absensi').upsert(records, { onConflict: 'kelas,tanggal,santri_id' });
-        if (error) dbg('Bulk update error: ' + error.message, true);
-        else dbg('Semua data tersimpan');
+        await supabase.from('absensi').upsert(records, { onConflict: 'kelas,tanggal,santri_id' });
+        showToast("Semua tersimpan");
     }
 
-    async function getRekapBulanan(kelas, bulanTahun) {
-        if (!isSupabaseReady) return { daftarSantri: [], dataAbsen: {}, semuaTanggal: [] };
-        const [tahun, bulan] = bulanTahun.split("-");
-        const daysInMonth = new Date(tahun, bulan, 0).getDate();
-        let semuaTanggal = [];
-        for (let d = 1; d <= daysInMonth; d++) semuaTanggal.push(`${tahun}-${bulan}-${String(d).padStart(2,'0')}`);
-        const { data: siswaData, error: siswaError } = await supabase.from('siswa').select('id, nama').eq('kelas', kelas);
-        if (siswaError || !siswaData || !siswaData.length) return { daftarSantri: [], dataAbsen: {}, semuaTanggal: [] };
-        const startDate = `${tahun}-${bulan}-01`;
-        const endDate = `${tahun}-${bulan}-${String(daysInMonth).padStart(2,'0')}`;
-        const { data: absData } = await supabase.from('absensi').select('santri_id, tanggal, status').eq('kelas', kelas).gte('tanggal', startDate).lte('tanggal', endDate);
+    async function getRekap(kelas, bulanTahun) {
+        if (!isReady) return { siswa: [], data: {}, tgl: [] };
+        const [thn, bln] = bulanTahun.split("-");
+        const hari = new Date(thn, bln, 0).getDate();
+        let semuaTgl = [];
+        for (let d=1; d<=hari; d++) semuaTgl.push(`${thn}-${bln}-${String(d).padStart(2,'0')}`);
+        
+        const { data: siswaData } = await supabase.from('siswa').select('id, nama').eq('kelas', kelas);
+        if (!siswaData || !siswaData.length) return { siswa: [], data: {}, tgl: [] };
+        
+        const start = `${thn}-${bln}-01`;
+        const end = `${thn}-${bln}-${String(hari).padStart(2,'0')}`;
+        const { data: absData } = await supabase.from('absensi').select('santri_id, tanggal, status').eq('kelas', kelas).gte('tanggal', start).lte('tanggal', end);
+        
         let statusMap = {};
         if (absData) absData.forEach(a => { if (!statusMap[a.santri_id]) statusMap[a.santri_id] = {}; statusMap[a.santri_id][a.tanggal] = a.status; });
-        const tanggalDenganData = semuaTanggal.filter(tgl => siswaData.some(s => statusMap[s.id]?.[tgl]));
+        
+        const tglAdaData = semuaTgl.filter(tgl => siswaData.some(s => statusMap[s.id]?.[tgl]));
         let dataAbsen = {};
-        for (let s of siswaData) { dataAbsen[s.id] = {}; for (let tgl of tanggalDenganData) dataAbsen[s.id][tgl] = statusMap[s.id]?.[tgl] || "alpha"; }
-        return { daftarSantri: siswaData.map(s => ({ id: s.id, nama: s.nama })), dataAbsen, semuaTanggal: tanggalDenganData };
-    }
-
-    async function getRekapSemuaKelas(bulanTahun) {
-        let semua = {};
-        for (let k of KELAS_IDS) {
-            const { daftarSantri, dataAbsen, semuaTanggal } = await getRekapBulanan(k, bulanTahun);
-            let totalHadir = 0, totalSakit = 0, totalIzin = 0, totalAlpha = 0;
-            for (let s of daftarSantri) for (let tgl of semuaTanggal) {
-                let st = dataAbsen[s.id][tgl];
-                if (st === "hadir") totalHadir++;
-                else if (st === "sakit") totalSakit++;
-                else if (st === "izin") totalIzin++;
-                else totalAlpha++;
-            }
-            semua[k] = { santriCount: daftarSantri.length, totalHadir, totalSakit, totalIzin, totalAlpha };
+        for (let s of siswaData) {
+            dataAbsen[s.id] = {};
+            for (let tgl of tglAdaData) dataAbsen[s.id][tgl] = statusMap[s.id]?.[tgl] || "alpha";
         }
-        return semua;
+        return { siswa: siswaData.map(s => ({ id: s.id, nama: s.nama })), data: dataAbsen, tgl: tglAdaData };
     }
 
-    // ========== UI RENDER FUNCTIONS ==========
-    let currentTanggalAbsensi = new Date().toISOString().slice(0,10);
+    // ========== TAMPILAN ==========
     const dynamicDiv = document.getElementById("dynamicContent");
+    let currentTanggal = new Date().toISOString().slice(0,10);
+    let currentKelasCache = {};
 
     function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    function showEditSiswa() {
-        dbg('Membuka menu Edit Data Siswa');
-        dynamicDiv.innerHTML = `<h2><i class="fas fa-user-graduate"></i> Manajemen Data Siswa</h2><div class="class-buttons" id="kelasSiswaSelector"></div><div id="siswaListContainer"><div class="loading">Memuat data...</div></div>`;
-        let activeKelas = "A";
-        let siswaDataGlobal = {};
-        async function refresh() { siswaDataGlobal = await loadSiswaPerKelas(); renderDaftarSiswa(activeKelas); }
+    async function showEditSiswa() {
+        dynamicDiv.innerHTML = `<h2><i class="fas fa-user-graduate"></i> Manajemen Data Siswa</h2><div class="class-buttons" id="kelasSelector"></div><div id="siswaContainer">Memuat...</div>`;
+        let aktif = "A";
+        let dataGlobal = {};
+        
+        async function refresh() { dataGlobal = await loadSiswa(); renderSiswa(); }
         function renderKelas() {
-            const cont = document.getElementById("kelasSiswaSelector");
+            const cont = document.getElementById("kelasSelector");
             if (!cont) return;
             cont.innerHTML = "";
-            KELAS_IDS.forEach(k => {
+            KELAS.forEach(k => {
                 let btn = document.createElement("button");
-                btn.innerText = NAMA_KELAS[k];
+                btn.textContent = NAMA_KELAS[k];
                 btn.classList.add("class-btn");
-                if (k === activeKelas) btn.classList.add("active");
-                btn.onclick = () => { activeKelas = k; renderKelas(); refresh(); };
+                if (k === aktif) btn.classList.add("active");
+                btn.onclick = () => { aktif = k; renderKelas(); renderSiswa(); };
                 cont.appendChild(btn);
             });
         }
-        async function renderDaftarSiswa(kelas) {
-            let list = siswaDataGlobal[kelas] || [];
-            const container = document.getElementById("siswaListContainer");
+        async function renderSiswa() {
+            const container = document.getElementById("siswaContainer");
             if (!container) return;
-            container.innerHTML = `<div class="student-form"><input type="text" id="namaSiswaBaru" placeholder="Nama santri baru"><button id="tambahSiswaBtn"><i class="fas fa-plus"></i> Tambah</button></div><table><thead><tr><th>No</th><th>Nama</th><th>Aksi</th></tr></thead><tbody id="siswaTbody"></tbody></table>`;
+            const list = dataGlobal[aktif] || [];
+            container.innerHTML = `<div class="student-form"><input type="text" id="namaBaru" placeholder="Nama santri baru"><button id="btnTambah"><i class="fas fa-plus"></i> Tambah</button></div><table><thead><tr><th>No</th><th>Nama</th><th>Aksi</th></tr></thead><tbody id="siswaTbody"></tbody></table>`;
             const tbody = document.getElementById("siswaTbody");
-            function refreshTable() {
-                if (!tbody) return;
+            if (tbody) {
                 tbody.innerHTML = "";
-                list.forEach((s, idx) => {
+                list.forEach((s, i) => {
                     let row = tbody.insertRow();
-                    row.insertCell(0).innerText = idx + 1;
-                    row.insertCell(1).innerText = s.nama;
-                    let del = document.createElement("button");
-                    del.innerHTML = '<i class="fas fa-trash"></i> Hapus';
-                    del.className = "btn-small";
-                    del.style.background = "#c0392b";
-                    del.onclick = async () => { if (confirm(`Hapus ${s.nama}?`)) { await hapusSiswa(s.id, s.nama); await refresh(); renderDaftarSiswa(activeKelas); } };
-                    row.insertCell(2).appendChild(del);
+                    row.insertCell(0).textContent = i+1;
+                    row.insertCell(1).textContent = s.nama;
+                    let btn = document.createElement("button");
+                    btn.innerHTML = '<i class="fas fa-trash"></i> Hapus';
+                    btn.className = "btn-small";
+                    btn.onclick = async () => { if (confirm(`Hapus ${s.nama}?`)) { await hapusSiswa(s.id, s.nama); await refresh(); renderSiswa(); } };
+                    row.insertCell(2).appendChild(btn);
                 });
             }
-            refreshTable();
-            const tambahBtn = document.getElementById("tambahSiswaBtn");
-            if (tambahBtn) tambahBtn.onclick = async () => {
-                let nama = document.getElementById("namaSiswaBaru")?.value.trim();
+            const btnTambah = document.getElementById("btnTambah");
+            if (btnTambah) btnTambah.onclick = async () => {
+                const nama = document.getElementById("namaBaru")?.value.trim();
                 if (!nama) return showToast("Nama tidak boleh kosong", true);
-                await tambahSiswa(kelas, nama);
+                await tambahSiswa(aktif, nama);
                 await refresh();
-                renderDaftarSiswa(activeKelas);
-                const inputNama = document.getElementById("namaSiswaBaru");
+                renderSiswa();
+                const inputNama = document.getElementById("namaBaru");
                 if (inputNama) inputNama.value = "";
             };
         }
         renderKelas();
-        refresh();
+        await refresh();
     }
 
     async function showAbsensi(kelas) {
-        dbg(`Membuka absensi kelas ${kelas}`);
         dynamicDiv.innerHTML = `<h2><i class="fas fa-book-open"></i> Absensi ${NAMA_KELAS[kelas]}</h2>
-            <div class="date-picker"><label>Tanggal:</label><input type="date" id="tglAbsensi" value="${currentTanggalAbsensi}">
-            <button id="refreshAbsensi"><i class="fas fa-sync-alt"></i> Muat</button>
-            <button id="simpanSemuaAbsensi" style="background:#2c6e49;"><i class="fas fa-save"></i> Simpan Semua</button></div>
-            <div id="absensiTableWrap"><div class="loading">Memuat data...</div></div>
-            <div id="alertAbsensi" class="alert"></div>`;
+            <div class="date-picker"><label>Tanggal:</label><input type="date" id="tglAbsen" value="${currentTanggal}">
+            <button id="btnMuat"><i class="fas fa-sync-alt"></i> Muat</button>
+            <button id="btnSimpanSemua" style="background:#2c6e49;"><i class="fas fa-save"></i> Simpan Semua</button></div>
+            <div id="tabelAbsensi">Memuat...</div>`;
+        
         async function loadTable() {
-            const tanggalInput = document.getElementById("tglAbsensi");
-            if (!tanggalInput) return;
-            let tanggal = tanggalInput.value;
-            currentTanggalAbsensi = tanggal;
-            let siswaData = await loadSiswaPerKelas();
-            let siswa = siswaData[kelas] || [];
-            let absMap = await getAbsensi(kelas, tanggal);
-            let wrap = document.getElementById("absensiTableWrap");
+            const tglInput = document.getElementById("tglAbsen");
+            if (!tglInput) return;
+            const tanggal = tglInput.value;
+            currentTanggal = tanggal;
+            const semuaSiswa = await loadSiswa();
+            const siswa = semuaSiswa[kelas] || [];
+            const absMap = await getAbsensi(kelas, tanggal);
+            const wrap = document.getElementById("tabelAbsensi");
             if (!wrap) return;
-            if (siswa.length === 0) { wrap.innerHTML = `<p>Belum ada siswa. Tambah di Edit Data Siswa.</p>`; return; }
+            if (siswa.length === 0) { wrap.innerHTML = "<p>Belum ada siswa. Tambah di Edit Data Siswa.</p>"; return; }
             let html = `<table><thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
-            siswa.forEach((s, idx) => {
+            siswa.forEach((s, i) => {
                 let st = absMap[s.id] || "hadir";
-                html += `<tr><td>${idx + 1}</td><td>${escapeHtml(s.nama)}</td>
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td>${escapeHtml(s.nama)}</td>
                     <td><select id="stat_${s.id}" class="status-select">
                         <option value="hadir" ${st === 'hadir' ? 'selected' : ''}>✅ Hadir</option>
                         <option value="sakit" ${st === 'sakit' ? 'selected' : ''}>🤒 Sakit</option>
                         <option value="izin" ${st === 'izin' ? 'selected' : ''}>📝 Izin</option>
                         <option value="alpha" ${st === 'alpha' ? 'selected' : ''}>❌ Alpha</option>
                     </select></td>
-                    <td><button class="btn-small simpan-satu" data-id="${s.id}"><i class="fas fa-save"></i> Simpan</button></td></tr>`;
+                    <td><button class="btn-small simpanSatu" data-id="${s.id}"><i class="fas fa-save"></i> Simpan</button></td>
+                </tr>`;
             });
             html += `</tbody></table>`;
             wrap.innerHTML = html;
-            document.querySelectorAll(".simpan-satu").forEach(btn => {
+            document.querySelectorAll(".simpanSatu").forEach(btn => {
                 btn.onclick = async () => {
-                    let sid = btn.getAttribute("data-id");
-                    let select = document.getElementById(`stat_${sid}`);
-                    if (select) { await updateStatus(kelas, tanggal, sid, select.value); showToast("Tersimpan ✓"); loadTable(); }
+                    const id = btn.getAttribute("data-id");
+                    const select = document.getElementById(`stat_${id}`);
+                    if (select) { await updateStatus(kelas, tanggal, id, select.value); showToast("Tersimpan"); loadTable(); }
                 };
             });
         }
         async function simpanSemua() {
-            const tanggalInput = document.getElementById("tglAbsensi");
-            if (!tanggalInput) return;
-            let tanggal = tanggalInput.value;
-            let siswaData = await loadSiswaPerKelas();
-            let siswa = siswaData[kelas] || [];
-            let newMap = {};
-            for (let s of siswa) { let sel = document.getElementById(`stat_${s.id}`); if (sel) newMap[s.id] = sel.value; }
-            if (Object.keys(newMap).length) { await setBulkAbsensi(kelas, tanggal, newMap); showToast("Semua tersimpan ✓"); loadTable(); }
+            const tglInput = document.getElementById("tglAbsen");
+            if (!tglInput) return;
+            const tanggal = tglInput.value;
+            const semuaSiswa = await loadSiswa();
+            const siswa = semuaSiswa[kelas] || [];
+            const newMap = {};
+            for (let s of siswa) {
+                const sel = document.getElementById(`stat_${s.id}`);
+                if (sel) newMap[s.id] = sel.value;
+            }
+            if (Object.keys(newMap).length) { await setBulkAbsensi(kelas, tanggal, newMap); loadTable(); }
             else showToast("Tidak ada perubahan", true);
         }
-        const refreshBtn = document.getElementById("refreshAbsensi");
-        const simpanBtn = document.getElementById("simpanSemuaAbsensi");
-        if (refreshBtn) refreshBtn.onclick = loadTable;
-        if (simpanBtn) simpanBtn.onclick = simpanSemua;
+        document.getElementById("btnMuat")?.addEventListener("click", loadTable);
+        document.getElementById("btnSimpanSemua")?.addEventListener("click", simpanSemua);
         loadTable();
     }
 
     async function showLaporan() {
-        dbg('Membuka menu Laporan');
-        const currentMonth = new Date().toISOString().slice(0, 7);
+        const bulanSekarang = new Date().toISOString().slice(0,7);
         dynamicDiv.innerHTML = `<h2><i class="fas fa-chart-pie"></i> Laporan Bulanan</h2>
-            <div class="class-buttons" id="kelasLaporanSelector"></div>
-            <div class="date-picker"><label>Bulan & Tahun:</label><input type="month" id="bulanLaporan" value="${currentMonth}">
-            <button id="generateLaporan"><i class="fas fa-chart-bar"></i> Tampilkan Laporan Kelas</button>
-            <button id="generateAllLaporan" style="background:#16a085;"><i class="fas fa-chart-line"></i> Tampilkan Ringkasan Semua Kelas</button></div>
-            <div id="laporanOutput"></div>
-            <div class="footer-actions"><button id="printLaporanBtn"><i class="fas fa-print"></i> Cetak</button><button id="downloadLaporanPdf"><i class="fas fa-file-pdf"></i> Download PDF</button></div>`;
-        let activeKelas = "A";
-        function renderKelasLap() {
-            const container = document.getElementById("kelasLaporanSelector");
-            if (!container) return;
-            container.innerHTML = "";
-            KELAS_IDS.forEach(k => {
+            <div class="class-buttons" id="kelasLapSelector"></div>
+            <div class="date-picker"><label>Bulan & Tahun:</label><input type="month" id="bulanLap" value="${bulanSekarang}">
+            <button id="btnTampilkan"><i class="fas fa-chart-bar"></i> Tampilkan Laporan Kelas</button>
+            <button id="btnRingkasan" style="background:#16a085;"><i class="fas fa-chart-line"></i> Ringkasan Semua Kelas</button></div>
+            <div id="hasilLaporan"></div>
+            <div class="footer-actions"><button id="btnCetak"><i class="fas fa-print"></i> Cetak</button></div>`;
+        
+        let aktifKelas = "A";
+        function renderKelas() {
+            const cont = document.getElementById("kelasLapSelector");
+            if (!cont) return;
+            cont.innerHTML = "";
+            KELAS.forEach(k => {
                 let btn = document.createElement("button");
-                btn.innerText = NAMA_KELAS[k];
+                btn.textContent = NAMA_KELAS[k];
                 btn.classList.add("class-btn");
-                if (k === activeKelas) btn.classList.add("active");
-                btn.onclick = () => { activeKelas = k; renderKelasLap(); generateLaporanPerKelas(); };
-                container.appendChild(btn);
+                if (k === aktifKelas) btn.classList.add("active");
+                btn.onclick = () => { aktifKelas = k; renderKelas(); tampilkanLaporan(); };
+                cont.appendChild(btn);
             });
         }
-        async function generateLaporanPerKelas() {
-            let bulan = document.getElementById("bulanLaporan")?.value;
+        async function tampilkanLaporan() {
+            const bulan = document.getElementById("bulanLap")?.value;
             if (!bulan) return;
-            const outputDiv = document.getElementById("laporanOutput");
-            if (outputDiv) outputDiv.innerHTML = `<div class="loading">Memuat laporan...</div>`;
-            let { daftarSantri, dataAbsen, semuaTanggal } = await getRekapBulanan(activeKelas, bulan);
-            if (daftarSantri.length === 0 || semuaTanggal.length === 0) {
-                if (outputDiv) outputDiv.innerHTML = `<p>Belum ada data absensi untuk kelas ${NAMA_KELAS[activeKelas]} pada bulan ${bulan}.</p>`;
+            const output = document.getElementById("hasilLaporan");
+            if (output) output.innerHTML = `<div class="loading">Memuat...</div>`;
+            const { siswa, data, tgl } = await getRekap(aktifKelas, bulan);
+            if (siswa.length === 0 || tgl.length === 0) {
+                if (output) output.innerHTML = `<p>Belum ada data absensi untuk ${NAMA_KELAS[aktifKelas]} pada bulan ${bulan}.</p>`;
                 return;
             }
-            let html = `<h3>📊 Laporan Bulanan ${NAMA_KELAS[activeKelas]} - ${bulan}</h3><div style="overflow-x:auto;"><table border="1"><thead><tr><th>No</th><th>Nama Santri</th>`;
-            semuaTanggal.forEach(tgl => html += `<th>${tgl.slice(5)}</th>`);
+            let html = `<h3>📊 Laporan ${NAMA_KELAS[aktifKelas]} - ${bulan}</h3><div style="overflow-x:auto;"><table border="1"><thead><tr><th>No</th><th>Nama</th>`;
+            tgl.forEach(t => html += `<th>${t.slice(5)}</th>`);
             html += `<th>H</th><th>S</th><th>I</th><th>A</th></tr></thead><tbody>`;
-            for (let s of daftarSantri) {
-                let h=0, sakit=0, izin=0, alpha=0;
-                html += `<tr><td>${daftarSantri.indexOf(s)+1}</td><td>${escapeHtml(s.nama)}</td>`;
-                for (let tgl of semuaTanggal) {
-                    let st = dataAbsen[s.id][tgl];
+            for (let s of siswa) {
+                let h=0, sk=0, iz=0, al=0;
+                html += `<tr><td>${siswa.indexOf(s)+1}</td><td>${escapeHtml(s.nama)}</td>`;
+                for (let t of tgl) {
+                    let st = data[s.id][t];
                     if (st === "hadir") { html += `<td>✅</td>`; h++; }
-                    else if (st === "sakit") { html += `<td>🤒</td>`; sakit++; }
-                    else if (st === "izin") { html += `<td>📝</td>`; izin++; }
-                    else { html += `<td>❌</td>`; alpha++; }
+                    else if (st === "sakit") { html += `<td>🤒</td>`; sk++; }
+                    else if (st === "izin") { html += `<td>📝</td>`; iz++; }
+                    else { html += `<td>❌</td>`; al++; }
                 }
-                html += `<td>${h}</td><td>${sakit}</td><td>${izin}</td><td>${alpha}</td></tr>`;
+                html += `<td>${h}</td><td>${sk}</td><td>${iz}</td><td>${al}</td></tr>`;
             }
             html += `</tbody></table></div><p><small>✅ Hadir  🤒 Sakit  📝 Izin  ❌ Alpha</small></p>`;
-            if (outputDiv) outputDiv.innerHTML = html;
+            if (output) output.innerHTML = html;
         }
-        async function generateRingkasanSemuaKelas() {
-            let bulan = document.getElementById("bulanLaporan")?.value;
+        async function ringkasanSemua() {
+            const bulan = document.getElementById("bulanLap")?.value;
             if (!bulan) return;
-            const outputDiv = document.getElementById("laporanOutput");
-            if (outputDiv) outputDiv.innerHTML = `<div class="loading">Memuat ringkasan...</div>`;
-            let rekapAll = await getRekapSemuaKelas(bulan);
-            let html = `<h3>📋 RINGKASAN SEMUA KELAS - ${bulan}</h3><table border="1"><thead><tr><th>Kelas</th><th>Jml Santri</th><th>Total Hadir</th><th>Total Sakit</th><th>Total Izin</th><th>Total Alpha</th></tr></thead><tbody>`;
-            for (let k of KELAS_IDS) {
-                let r = rekapAll[k];
-                html += `<tr><td>${NAMA_KELAS[k]}</td><td>${r.santriCount}</td><td>${r.totalHadir}</td><td>${r.totalSakit}</td><td>${r.totalIzin}</td><td>${r.totalAlpha}</td></tr>`;
+            const output = document.getElementById("hasilLaporan");
+            if (output) output.innerHTML = `<div class="loading">Memuat ringkasan...</div>`;
+            let semuaRekap = {};
+            for (let k of KELAS) {
+                const { siswa, tgl } = await getRekap(k, bulan);
+                semuaRekap[k] = { jml: siswa.length, totalHari: tgl.length };
             }
-            html += `</tbody></table><p><small>Total dihitung dari seluruh hari yang memiliki sesi absensi.</small></p>`;
-            if (outputDiv) outputDiv.innerHTML = html;
-        }
-        function downloadAsPDF() {
-            const content = document.getElementById("laporanOutput")?.cloneNode(true);
-            if (!content?.innerText.trim() || content.innerText.includes("Tidak ada") || content.innerText.includes("Belum ada")) {
-                showToast("Tidak ada laporan yang bisa diunduh", true);
-                return;
+            let html = `<h3>📋 RINGKASAN SEMUA KELAS - ${bulan}</h3><table border="1"><thead><tr><th>Kelas</th><th>Jml Santri</th><th>Total Hari Absensi</th></tr></thead><tbody>`;
+            for (let k of KELAS) {
+                html += `<tr><td>${NAMA_KELAS[k]}</td><td>${semuaRekap[k].jml}</td><td>${semuaRekap[k].totalHari}</td></tr>`;
             }
-            const win = window.open('', '_blank');
-            win.document.write(`<html><head><title>Laporan Absensi</title><style>body{font-family:'Segoe UI',sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:8px;text-align:center}th{background:#2c3e50;color:white}h3{text-align:center}</style></head><body>${content.outerHTML}</body></html>`);
-            win.document.close();
-            win.print();
+            html += `</tbody></table><p><small>Catatan: Hanya menampilkan hari yang sudah ada absensi.</small></p>`;
+            if (output) output.innerHTML = html;
         }
-        renderKelasLap();
-        const genBtn = document.getElementById("generateLaporan");
-        const genAllBtn = document.getElementById("generateAllLaporan");
-        const printBtn = document.getElementById("printLaporanBtn");
-        const pdfBtn = document.getElementById("downloadLaporanPdf");
-        if (genBtn) genBtn.onclick = generateLaporanPerKelas;
-        if (genAllBtn) genAllBtn.onclick = generateRingkasanSemuaKelas;
-        if (printBtn) printBtn.onclick = () => { let c = document.getElementById("laporanOutput")?.cloneNode(true); if(c) { let w = window.open('', '_blank'); w.document.write(`<html><head><title>Laporan</title><style>table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:6px;text-align:center}</style></head><body>${c.innerHTML}</body></html>`); w.document.close(); w.print(); } };
-        if (pdfBtn) pdfBtn.onclick = downloadAsPDF;
-        generateLaporanPerKelas();
+        renderKelas();
+        document.getElementById("btnTampilkan")?.addEventListener("click", tampilkanLaporan);
+        document.getElementById("btnRingkasan")?.addEventListener("click", ringkasanSemua);
+        document.getElementById("btnCetak")?.addEventListener("click", () => {
+            const content = document.getElementById("hasilLaporan")?.cloneNode(true);
+            if (content) { let w = window.open('', '_blank'); w.document.write(`<html><head><title>Laporan</title><style>table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:6px;text-align:center}</style></head><body>${content.innerHTML}</body></html>`); w.document.close(); w.print(); }
+        });
+        tampilkanLaporan();
     }
 
-    // Logo handler
-    let _logoDataUrl = null;
-    function setupLogo() {
-        const logoContainer = document.getElementById("logoContainer");
-        try { const saved = localStorage.getItem("customLogo"); if (saved) { _logoDataUrl = saved; logoContainer.innerHTML = `<img src="${saved}" class="logo-img">`; } } catch(e) {}
-        logoContainer.onclick = () => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "image/*";
-            input.style.display = "none";
-            document.body.appendChild(input);
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                        _logoDataUrl = ev.target.result;
-                        try { localStorage.setItem("customLogo", _logoDataUrl); } catch(e) {}
-                        logoContainer.innerHTML = `<img src="${_logoDataUrl}" class="logo-img">`;
-                        showToast("Logo berhasil diubah");
-                    };
-                    reader.readAsDataURL(file);
-                }
-                document.body.removeChild(input);
-            };
-            input.click();
-        };
+    // ========== PASANG EVENT LISTENER (Pasti berhasil) ==========
+    function initApp() {
+        console.log("Init aplikasi...");
+        const btnData = document.getElementById("btnDataSiswa");
+        const btnA = document.getElementById("btnKelasA");
+        const btnB = document.getElementById("btnKelasB");
+        const btnC = document.getElementById("btnKelasC");
+        const btnD = document.getElementById("btnKelasD");
+        const btnLap = document.getElementById("btnLaporan");
+        
+        if (btnData) btnData.onclick = () => { console.log("Klik Edit"); showEditSiswa(); };
+        if (btnA) btnA.onclick = () => { console.log("Klik Kelas A"); showAbsensi("A"); };
+        if (btnB) btnB.onclick = () => { console.log("Klik Kelas B"); showAbsensi("B"); };
+        if (btnC) btnC.onclick = () => { console.log("Klik Kelas C"); showAbsensi("C"); };
+        if (btnD) btnD.onclick = () => { console.log("Klik Kelas D"); showAbsensi("D"); };
+        if (btnLap) btnLap.onclick = () => { console.log("Klik Laporan"); showLaporan(); };
+        
+        showToast("Aplikasi siap! Klik menu di atas", false);
     }
-
-    // Register event handlers after DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-        dbg('DOM siap, menghubungkan tombol...');
-        const btnDataSiswa = document.getElementById("btnDataSiswa");
-        const btnKelasA = document.getElementById("btnKelasA");
-        const btnKelasB = document.getElementById("btnKelasB");
-        const btnKelasC = document.getElementById("btnKelasC");
-        const btnKelasD = document.getElementById("btnKelasD");
-        const btnLaporan = document.getElementById("btnLaporan");
-        
-        if (btnDataSiswa) btnDataSiswa.onclick = () => { dbg('Klik: Edit Data Siswa'); showEditSiswa(); };
-        if (btnKelasA) btnKelasA.onclick = () => { dbg('Klik: Kelas A'); showAbsensi("A"); };
-        if (btnKelasB) btnKelasB.onclick = () => { dbg('Klik: Kelas B'); showAbsensi("B"); };
-        if (btnKelasC) btnKelasC.onclick = () => { dbg('Klik: Kelas C'); showAbsensi("C"); };
-        if (btnKelasD) btnKelasD.onclick = () => { dbg('Klik: Kelas D'); showAbsensi("D"); };
-        if (btnLaporan) btnLaporan.onclick = () => { dbg('Klik: Laporan'); showLaporan(); };
-        
-        dbg('✅ Semua tombol terhubung!');
-        setupLogo();
-    });
+    
+    // Jalankan setelah DOM siap
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+        initApp();
+    }
 </script>
 </body>
-</html>
+    </html>
