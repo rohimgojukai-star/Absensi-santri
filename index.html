@@ -61,26 +61,64 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrYWh2bmFmd3h5cHJvdWhibGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzA3MDUsImV4cCI6MjA5NDE0NjcwNX0.OgzDRxsPyrQeL8VwS6kgWkkzGAX-y9k-3VOWf3ti3r8";
     // ==========================================
 
+    // ===== DEBUG PANEL (tampil di layar, tidak perlu DevTools) =====
+    const _dbg = document.createElement('div');
+    _dbg.id = 'debugPanel';
+    _dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.88);color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:9999;display:none;';
+    document.body.appendChild(_dbg);
+    let _dbgVisible = false;
+
+    // Ketuk pojok kanan bawah 3x untuk tampilkan/sembunyikan debug panel
+    let _tapCount = 0;
+    document.addEventListener('click', e => {
+        if (e.clientX > window.innerWidth * 0.8 && e.clientY > window.innerHeight * 0.8) {
+            _tapCount++;
+            if (_tapCount >= 3) {
+                _tapCount = 0;
+                _dbgVisible = !_dbgVisible;
+                _dbg.style.display = _dbgVisible ? 'block' : 'none';
+            }
+        } else { _tapCount = 0; }
+    });
+
+    function dbg(msg, color) {
+        const line = document.createElement('div');
+        line.style.color = color || '#0f0';
+        line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+        _dbg.appendChild(line);
+        _dbg.scrollTop = _dbg.scrollHeight;
+        console.log(msg);
+    }
+
+    // Tangkap semua error JavaScript global
+    window.onerror = (msg, src, line) => {
+        dbg('JS ERROR: ' + msg + ' (baris ' + line + ')', '#ff4444');
+        _dbg.style.display = 'block';
+        _dbgVisible = true;
+    };
+    window.addEventListener('unhandledrejection', e => {
+        dbg('PROMISE ERROR: ' + (e.reason?.message || e.reason), '#ff9900');
+        _dbg.style.display = 'block';
+        _dbgVisible = true;
+    });
+    // ===============================================================
+
     // Declare dynamicDiv early so it's available everywhere
     const dynamicDiv = document.getElementById("dynamicContent");
 
     let supabase;
     let isSupabaseReady = false;
 
-    // FIX: Validate credentials before calling createClient so the script
-    // never crashes — buttons will always be bound regardless of config state
-    if (!SUPABASE_URL || SUPABASE_URL.includes("your-project") ||
-        !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("your-anon-key")) {
-        dynamicDiv.innerHTML = `<p style="color:red; padding:20px;">⚠️ Supabase belum dikonfigurasi. Ganti SUPABASE_URL dan SUPABASE_ANON_KEY di kode.</p>`;
-    } else {
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            isSupabaseReady = true;
-            console.log("Supabase connected");
-        } catch(e) {
-            console.error(e);
-            dynamicDiv.innerHTML = `<p style="color:red; padding:20px;">⚠️ Gagal koneksi Supabase: ${e.message}</p>`;
-        }
+    try {
+        if (!window.supabase) throw new Error("Library Supabase tidak termuat. Cek koneksi internet.");
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        isSupabaseReady = true;
+        dbg('Supabase client OK', '#0f0');
+    } catch(e) {
+        dbg('createClient GAGAL: ' + e.message, '#ff4444');
+        _dbg.style.display = 'block';
+        _dbgVisible = true;
+        dynamicDiv.innerHTML = `<p style="color:red;padding:20px;">⚠️ Gagal koneksi Supabase: ${e.message}</p>`;
     }
 
     const KELAS_IDS = ["A","B","C","D"];
@@ -574,12 +612,13 @@
     }
 
     // Event binding
-    document.getElementById("btnDataSiswa").onclick = showEditSiswa;
-    document.getElementById("btnKelasA").onclick = () => showAbsensi("A");
-    document.getElementById("btnKelasB").onclick = () => showAbsensi("B");
-    document.getElementById("btnKelasC").onclick = () => showAbsensi("C");
-    document.getElementById("btnKelasD").onclick = () => showAbsensi("D");
-    document.getElementById("btnLaporan").onclick = showLaporan;
+    document.getElementById("btnDataSiswa").onclick = () => { dbg("Klik: Edit Data Siswa"); showEditSiswa(); };
+    document.getElementById("btnKelasA").onclick = () => { dbg("Klik: Kelas A"); showAbsensi("A"); };
+    document.getElementById("btnKelasB").onclick = () => { dbg("Klik: Kelas B"); showAbsensi("B"); };
+    document.getElementById("btnKelasC").onclick = () => { dbg("Klik: Kelas C"); showAbsensi("C"); };
+    document.getElementById("btnKelasD").onclick = () => { dbg("Klik: Kelas D"); showAbsensi("D"); };
+    document.getElementById("btnLaporan").onclick = () => { dbg("Klik: Laporan"); showLaporan(); };
+    dbg("Semua tombol terdaftar ✓", "#0ff");
 
     setupLogo();
 </script>
