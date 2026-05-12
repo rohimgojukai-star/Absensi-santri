@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Cek Koneksi Supabase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: monospace; padding: 30px; background: #1a1a2e; color: #eee; }
+  h2 { color: #f4a261; margin-bottom: 20px; }
+  .box { background: #16213e; border-radius: 12px; padding: 20px; margin: 12px 0; border-left: 4px solid #555; }
+  .ok   { border-color: #2ecc71; }
+  .err  { border-color: #e74c3c; }
+  .warn { border-color: #f39c12; }
+  .info { border-color: #3498db; }
+  .label { font-size: 0.8rem; color: #aaa; margin-bottom: 6px; }
+  .val   { font-size: 1rem; }
+  button { margin-top: 20px; padding: 12px 28px; background: #f4a261; border: none; border-radius: 8px; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; }
+  button:hover { background: #e68a3f; }
+  pre { white-space: pre-wrap; word-break: break-all; color: #a8ff78; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<h2>🔍 Diagnostik Supabase — Rumah Qur'an Lestari</h2>
+<div id="output"><div class="box info"><div class="val">⏳ Klik tombol untuk mulai cek...</div></div></div>
+<button onclick="runDiag()">▶ Jalankan Diagnostik</button>
+
+<script>
+const SUPABASE_URL     = "https://dkahvnafwxyprouhblhj.supabase.co";
+const SUPABASE_ANON_KEY= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrYWh2bmFmd3h5cHJvdWhibGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzA3MDUsImV4cCI6MjA5NDE0NjcwNX0.OgzDRxsPyrQeL8VwS6kgWkkzGAX-y9k-3VOWf3ti3r8";
+
+function box(type, label, val) {
+  return `<div class="box ${type}"><div class="label">${label}</div><div class="val">${val}</div></div>`;
+}
+
+async function runDiag() {
+  const out = document.getElementById("output");
+  out.innerHTML = "";
+  let html = "";
+
+  // 1. URL & Key
+  html += box("info", "📡 Supabase URL", SUPABASE_URL);
+  html += box("info", "🔑 Anon Key (12 char pertama)", SUPABASE_ANON_KEY.slice(0,12) + "...");
+
+  // 2. createClient
+  let sb;
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    html += box("ok", "✅ createClient", "Berhasil membuat klien Supabase");
+  } catch(e) {
+    html += box("err", "❌ createClient GAGAL", e.message);
+    out.innerHTML = html;
+    return;
+  }
+
+  // 3. Ping tabel siswa
+  try {
+    const { data, error, status } = await sb.from('siswa').select('id').limit(1);
+    if (error) {
+      if (status === 404 || error.code === "42P01") {
+        html += box("err", "❌ Tabel 'siswa' TIDAK ADA",
+          `Error: ${error.message}<br><br>
+          <b>→ Solusi:</b> Jalankan SQL setup di Supabase Dashboard → SQL Editor`);
+      } else if (status === 401 || status === 403) {
+        html += box("err", "❌ Akses DITOLAK ke tabel 'siswa'",
+          `Status: ${status} — ${error.message}<br><br>
+          <b>→ Solusi:</b> Aktifkan RLS dan buat policy di Supabase (lihat SQL setup)`);
+      } else {
+        html += box("err", `❌ Error tabel 'siswa' (status ${status})`,
+          `<pre>${JSON.stringify(error, null, 2)}</pre>`);
+      }
+    } else {
+      html += box("ok", "✅ Tabel 'siswa'", `Terhubung! Ditemukan ${data.length} baris (limit 1)`);
+    }
+  } catch(e) {
+    html += box("err", "❌ Network error ke tabel 'siswa'", e.message +
+      "<br><br><b>→ Kemungkinan:</b> CORS belum diizinkan atau URL salah");
+  }
+
+  // 4. Ping tabel absensi
+  try {
+    const { data, error, status } = await sb.from('absensi').select('id').limit(1);
+    if (error) {
+      if (status === 404 || error.code === "42P01") {
+        html += box("err", "❌ Tabel 'absensi' TIDAK ADA",
+          `Error: ${error.message}<br><br>
+          <b>→ Solusi:</b> Jalankan SQL setup`);
+      } else if (status === 401 || status === 403) {
+        html += box("err", "❌ Akses DITOLAK ke tabel 'absensi'",
+          `Status: ${status} — ${error.message}`);
+      } else {
+        html += box("err", `❌ Error tabel 'absensi' (status ${status})`,
+          `<pre>${JSON.stringify(error, null, 2)}</pre>`);
+      }
+    } else {
+      html += box("ok", "✅ Tabel 'absensi'", `Terhubung! Ditemukan ${data.length} baris (limit 1)`);
+    }
+  } catch(e) {
+    html += box("err", "❌ Network error ke tabel 'absensi'", e.message);
+  }
+
+  // 5. Test INSERT ke siswa (lalu langsung DELETE)
+  try {
+    const { data: ins, error: insErr } = await sb
+      .from('siswa')
+      .insert([{ kelas: 'A', nama: '__TEST_DIAGNOSTIK__' }])
+      .select().single();
+
+    if (insErr) {
+      html += box("err", "❌ INSERT ke 'siswa' GAGAL",
+        `${insErr.message}<br><br>
+        <b>→ Kemungkinan:</b> Policy RLS belum mengizinkan INSERT dari anon`);
+    } else {
+      // hapus lagi
+      await sb.from('siswa').delete().eq('id', ins.id);
+      html += box("ok", "✅ INSERT + DELETE", "Write access ke tabel 'siswa' berfungsi normal");
+    }
+  } catch(e) {
+    html += box("err", "❌ Exception saat INSERT", e.message);
+  }
+
+  // 6. Kesimpulan
+  const allOk = !html.includes("class=\"box err\"");
+  if (allOk) {
+    html += box("ok", "🎉 SEMUA BAIK!", "Supabase sudah terkonfigurasi dengan benar. Aplikasi absensi siap dipakai.");
+  } else {
+    html += box("warn", "⚠️ Ada masalah yang perlu diperbaiki",
+      "Lihat item merah di atas. Jalankan <b>setup_supabase.sql</b> di Supabase SQL Editor jika tabel belum ada.");
+  }
+
+  out.innerHTML = html;
+}
+</script>
+</body>
+</html>
