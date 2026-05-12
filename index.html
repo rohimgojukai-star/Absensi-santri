@@ -36,6 +36,10 @@
         .footer-actions { margin-top: 20px; display: flex; gap: 15px; justify-content: flex-end; }
         @media (max-width: 700px) { .dash-btn { padding: 10px 18px; font-size: 0.9rem; } th, td { font-size: 12px; } }
         .loading { text-align: center; padding: 40px; color: #666; }
+        
+        /* Toast notification */
+        .toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2c6e49; color: white; padding: 12px 24px; border-radius: 40px; font-size: 14px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: fadeInOut 2s ease; pointer-events: none; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateX(-50%) translateY(20px); } 15% { opacity: 1; transform: translateX(-50%) translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
     </style>
 </head>
 <body>
@@ -61,129 +65,107 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrYWh2bmFmd3h5cHJvdWhibGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NzA3MDUsImV4cCI6MjA5NDE0NjcwNX0.OgzDRxsPyrQeL8VwS6kgWkkzGAX-y9k-3VOWf3ti3r8";
     // ==========================================
 
-    // ===== DEBUG PANEL (tampil di layar, tidak perlu DevTools) =====
+    // ===== SIMPLE TOAST NOTIFICATION (tidak perlu console) =====
+    function showToast(msg, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-msg';
+        toast.style.background = isError ? '#c0392b' : '#2c6e49';
+        toast.innerHTML = (isError ? '⚠️ ' : '✅ ') + msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+
+    // ===== DEBUG PANEL (ketuk pojok kanan bawah 3x) =====
     const _dbg = document.createElement('div');
     _dbg.id = 'debugPanel';
-    _dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.88);color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:9999;display:none;';
+    _dbg.style.cssText = 'position:fixed;bottom:0;left:0;right:0;max-height:220px;overflow-y:auto;background:rgba(0,0,0,0.92);color:#0f0;font-family:monospace;font-size:11px;padding:8px;z-index:9999;display:none;border-top:2px solid #0f0;';
     document.body.appendChild(_dbg);
     let _dbgVisible = false;
 
-    // Ketuk pojok kanan bawah 3x untuk tampilkan/sembunyikan debug panel
     let _tapCount = 0;
+    let _tapTimer = null;
     document.addEventListener('click', e => {
         if (e.clientX > window.innerWidth * 0.8 && e.clientY > window.innerHeight * 0.8) {
             _tapCount++;
+            if (_tapTimer) clearTimeout(_tapTimer);
+            _tapTimer = setTimeout(() => { _tapCount = 0; }, 500);
             if (_tapCount >= 3) {
                 _tapCount = 0;
                 _dbgVisible = !_dbgVisible;
                 _dbg.style.display = _dbgVisible ? 'block' : 'none';
+                showToast(_dbgVisible ? 'Debug panel dibuka' : 'Debug panel ditutup');
             }
-        } else { _tapCount = 0; }
+        }
     });
 
-    function dbg(msg, color) {
+    function dbg(msg, isError = false) {
         const line = document.createElement('div');
-        line.style.color = color || '#0f0';
+        line.style.color = isError ? '#ff6666' : '#88ff88';
+        line.style.borderBottom = '1px solid #333';
+        line.style.padding = '2px 0';
         line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
         _dbg.appendChild(line);
         _dbg.scrollTop = _dbg.scrollHeight;
         console.log(msg);
+        if (isError) showToast(msg, true);
     }
 
-    // Tangkap semua error JavaScript global
-    window.onerror = (msg, src, line) => {
-        dbg('JS ERROR: ' + msg + ' (baris ' + line + ')', '#ff4444');
-        _dbg.style.display = 'block';
-        _dbgVisible = true;
-    };
-    window.addEventListener('unhandledrejection', e => {
-        dbg('PROMISE ERROR: ' + (e.reason?.message || e.reason), '#ff9900');
-        _dbg.style.display = 'block';
-        _dbgVisible = true;
-    });
-    // ===============================================================
+    window.onerror = (msg, src, line) => dbg('JS ERROR: ' + msg + ' (line ' + line + ')', true);
+    window.addEventListener('unhandledrejection', e => dbg('PROMISE ERROR: ' + (e.reason?.message || e.reason), true));
+    // ===========================================================
 
-    // Declare dynamicDiv early so it's available everywhere
-    const dynamicDiv = document.getElementById("dynamicContent");
+    let supabase, isSupabaseReady = false;
 
-    let supabase;
-    let isSupabaseReady = false;
-
-    try {
-        if (!window.supabase) throw new Error("Library Supabase tidak termuat. Cek koneksi internet.");
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        isSupabaseReady = true;
-        dbg('Supabase client OK', '#0f0');
-    } catch(e) {
-        dbg('createClient GAGAL: ' + e.message, '#ff4444');
-        _dbg.style.display = 'block';
-        _dbgVisible = true;
-        dynamicDiv.innerHTML = `<p style="color:red;padding:20px;">⚠️ Gagal koneksi Supabase: ${e.message}</p>`;
-    }
+    (function initSupabase() {
+        try {
+            if (!window.supabase) throw new Error("Library Supabase tidak termuat. Cek koneksi internet.");
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            isSupabaseReady = true;
+            dbg('✅ Supabase client initialized');
+            showToast('Terhubung ke database!');
+        } catch(e) {
+            dbg('❌ Gagal init Supabase: ' + e.message, true);
+            document.getElementById("dynamicContent").innerHTML = `<p style="color:red;padding:20px;">⚠️ Gagal koneksi Supabase: ${e.message}</p>`;
+        }
+    })();
 
     const KELAS_IDS = ["A","B","C","D"];
     const NAMA_KELAS = { A:"Kelas A", B:"Kelas B", C:"Kelas C", D:"Kelas D" };
 
     // ========== FUNGSI CRUD SISWA ==========
     async function loadSiswaPerKelas() {
-        if (!isSupabaseReady) return { A:[], B:[], C:[], D:[] };
-        const { data, error } = await supabase
-            .from('siswa')
-            .select('id, nama, kelas')
-            .order('nama');
-        
-        if (error) {
-            console.error("Load siswa error:", error);
-            return { A:[], B:[], C:[], D:[] };
-        }
-        
+        if (!isSupabaseReady) { dbg('loadSiswa: Supabase tidak siap', true); return { A:[], B:[], C:[], D:[] }; }
+        dbg('Memuat data siswa...');
+        const { data, error } = await supabase.from('siswa').select('id, nama, kelas').order('nama');
+        if (error) { dbg('Load siswa error: ' + error.message, true); return { A:[], B:[], C:[], D:[] }; }
         let result = { A:[], B:[], C:[], D:[] };
-        data.forEach(s => {
-            if (result[s.kelas]) result[s.kelas].push({ id: s.id, nama: s.nama });
-        });
+        data.forEach(s => { if (result[s.kelas]) result[s.kelas].push({ id: s.id, nama: s.nama }); });
+        dbg(`Data siswa dimuat: A:${result.A.length}, B:${result.B.length}, C:${result.C.length}, D:${result.D.length}`);
         return result;
     }
 
     async function tambahSiswa(kelas, nama) {
         if (!isSupabaseReady) return null;
-        const { data, error } = await supabase
-            .from('siswa')
-            .insert([{ kelas, nama: nama.trim() }])
-            .select()
-            .single();
-        
-        if (error) {
-            console.error("Tambah siswa error:", error);
-            alert("Gagal menambah siswa: " + error.message);
-            return null;
-        }
+        dbg(`Tambah siswa: ${nama} (kelas ${kelas})`);
+        const { data, error } = await supabase.from('siswa').insert([{ kelas, nama: nama.trim() }]).select().single();
+        if (error) { dbg('Tambah siswa error: ' + error.message, true); showToast('Gagal: ' + error.message, true); return null; }
+        dbg(`Siswa ${nama} berhasil ditambahkan (ID: ${data.id})`);
+        showToast(`"${nama}" ditambahkan ke ${NAMA_KELAS[kelas]}`);
         return { id: data.id, nama: data.nama };
     }
 
-    async function hapusSiswa(siswaId) {
+    async function hapusSiswa(siswaId, nama) {
         if (!isSupabaseReady) return;
-        const { error } = await supabase
-            .from('siswa')
-            .delete()
-            .eq('id', siswaId);
-        
-        if (error) console.error("Hapus siswa error:", error);
+        dbg(`Hapus siswa ID: ${siswaId} (${nama})`);
+        const { error } = await supabase.from('siswa').delete().eq('id', siswaId);
+        if (error) { dbg('Hapus siswa error: ' + error.message, true); showToast('Gagal hapus: ' + error.message, true); }
+        else { showToast(`"${nama}" telah dihapus`); }
     }
 
-    // ========== FUNGSI ABSENSI ==========
     async function getAbsensi(kelas, tanggal) {
         if (!isSupabaseReady) return {};
-        const { data, error } = await supabase
-            .from('absensi')
-            .select('santri_id, status')
-            .eq('kelas', kelas)
-            .eq('tanggal', tanggal);
-        
-        if (error) {
-            console.error("Get absensi error:", error);
-            return {};
-        }
-        
+        const { data, error } = await supabase.from('absensi').select('santri_id, status').eq('kelas', kelas).eq('tanggal', tanggal);
+        if (error) { dbg('Get absensi error: ' + error.message, true); return {}; }
         let map = {};
         data.forEach(a => { map[a.santri_id] = a.status; });
         return map;
@@ -191,110 +173,43 @@
 
     async function updateStatus(kelas, tanggal, santriId, status) {
         if (!isSupabaseReady) return;
-        const { error } = await supabase
-            .from('absensi')
-            .upsert({
-                kelas,
-                tanggal,
-                // FIX: Ensure santri_id is always an integer, not a string from data-id attribute
-                santri_id: parseInt(santriId),
-                status,
-                // FIX: Pass ISO string instead of Date object
-                updated_at: new Date().toISOString()
-            }, {
-                // FIX: onConflict must have NO spaces between column names
-                onConflict: 'kelas,tanggal,santri_id'
-            });
-        
-        if (error) console.error("Update status error:", error);
+        dbg(`Update status: santri ${santriId} -> ${status}`);
+        const { error } = await supabase.from('absensi').upsert({
+            kelas, tanggal, santri_id: parseInt(santriId), status, updated_at: new Date().toISOString()
+        }, { onConflict: 'kelas,tanggal,santri_id' });
+        if (error) dbg('Update status error: ' + error.message, true);
+        else dbg(`Status berhasil disimpan`);
     }
 
     async function setBulkAbsensi(kelas, tanggal, dataMap) {
         if (!isSupabaseReady) return;
+        dbg(`Menyimpan ${Object.keys(dataMap).length} data absensi untuk ${kelas} tgl ${tanggal}`);
         const records = [];
         for (let [santriId, status] of Object.entries(dataMap)) {
-            records.push({
-                kelas,
-                tanggal,
-                // FIX: parseInt was already here, kept as-is (correct)
-                santri_id: parseInt(santriId),
-                status,
-                // FIX: Pass ISO string instead of Date object
-                updated_at: new Date().toISOString()
-            });
+            records.push({ kelas, tanggal, santri_id: parseInt(santriId), status, updated_at: new Date().toISOString() });
         }
-        
-        const { error } = await supabase
-            .from('absensi')
-            .upsert(records, {
-                // FIX: onConflict must have NO spaces between column names
-                onConflict: 'kelas,tanggal,santri_id'
-            });
-        
-        if (error) console.error("Bulk update error:", error);
+        const { error } = await supabase.from('absensi').upsert(records, { onConflict: 'kelas,tanggal,santri_id' });
+        if (error) dbg('Bulk update error: ' + error.message, true);
+        else dbg('Semua data tersimpan');
     }
 
-    // ========== LAPORAN ==========
     async function getRekapBulanan(kelas, bulanTahun) {
         if (!isSupabaseReady) return { daftarSantri: [], dataAbsen: {}, semuaTanggal: [] };
-        
         const [tahun, bulan] = bulanTahun.split("-");
         const daysInMonth = new Date(tahun, bulan, 0).getDate();
         let semuaTanggal = [];
-        for (let d = 1; d <= daysInMonth; d++) {
-            semuaTanggal.push(`${tahun}-${bulan}-${String(d).padStart(2,'0')}`);
-        }
-        
-        // Ambil semua siswa di kelas ini
-        const { data: siswaData, error: siswaError } = await supabase
-            .from('siswa')
-            .select('id, nama')
-            .eq('kelas', kelas);
-        
-        if (siswaError || !siswaData || !siswaData.length) {
-            return { daftarSantri: [], dataAbsen: {}, semuaTanggal };
-        }
-        
-        // Ambil absensi bulan ini
+        for (let d = 1; d <= daysInMonth; d++) semuaTanggal.push(`${tahun}-${bulan}-${String(d).padStart(2,'0')}`);
+        const { data: siswaData, error: siswaError } = await supabase.from('siswa').select('id, nama').eq('kelas', kelas);
+        if (siswaError || !siswaData || !siswaData.length) return { daftarSantri: [], dataAbsen: {}, semuaTanggal: [] };
         const startDate = `${tahun}-${bulan}-01`;
         const endDate = `${tahun}-${bulan}-${String(daysInMonth).padStart(2,'0')}`;
-        const { data: absData, error: absError } = await supabase
-            .from('absensi')
-            .select('santri_id, tanggal, status')
-            .eq('kelas', kelas)
-            .gte('tanggal', startDate)
-            .lte('tanggal', endDate);
-        
-        if (absError) console.error("Get rekap error:", absError);
-
+        const { data: absData } = await supabase.from('absensi').select('santri_id, tanggal, status').eq('kelas', kelas).gte('tanggal', startDate).lte('tanggal', endDate);
         let statusMap = {};
-        if (absData) {
-            absData.forEach(a => {
-                if (!statusMap[a.santri_id]) statusMap[a.santri_id] = {};
-                statusMap[a.santri_id][a.tanggal] = a.status;
-            });
-        }
-
-        // FIX: Only include dates that have at least one attendance record
-        // so days with no session are not counted as alpha for everyone
-        const tanggalDenganData = semuaTanggal.filter(tgl =>
-            siswaData.some(s => statusMap[s.id]?.[tgl])
-        );
-        
+        if (absData) absData.forEach(a => { if (!statusMap[a.santri_id]) statusMap[a.santri_id] = {}; statusMap[a.santri_id][a.tanggal] = a.status; });
+        const tanggalDenganData = semuaTanggal.filter(tgl => siswaData.some(s => statusMap[s.id]?.[tgl]));
         let dataAbsen = {};
-        for (let s of siswaData) {
-            dataAbsen[s.id] = {};
-            for (let tgl of tanggalDenganData) {
-                dataAbsen[s.id][tgl] = statusMap[s.id]?.[tgl] || "alpha";
-            }
-        }
-        
-        return {
-            daftarSantri: siswaData.map(s => ({ id: s.id, nama: s.nama })),
-            dataAbsen,
-            // FIX: Return only dates that actually have sessions
-            semuaTanggal: tanggalDenganData
-        };
+        for (let s of siswaData) { dataAbsen[s.id] = {}; for (let tgl of tanggalDenganData) dataAbsen[s.id][tgl] = statusMap[s.id]?.[tgl] || "alpha"; }
+        return { daftarSantri: siswaData.map(s => ({ id: s.id, nama: s.nama })), dataAbsen, semuaTanggal: tanggalDenganData };
     }
 
     async function getRekapSemuaKelas(bulanTahun) {
@@ -302,52 +217,51 @@
         for (let k of KELAS_IDS) {
             const { daftarSantri, dataAbsen, semuaTanggal } = await getRekapBulanan(k, bulanTahun);
             let totalHadir = 0, totalSakit = 0, totalIzin = 0, totalAlpha = 0;
-            for (let s of daftarSantri) {
-                for (let tgl of semuaTanggal) {
-                    let st = dataAbsen[s.id][tgl];
-                    if (st === "hadir") totalHadir++;
-                    else if (st === "sakit") totalSakit++;
-                    else if (st === "izin") totalIzin++;
-                    else totalAlpha++;
-                }
+            for (let s of daftarSantri) for (let tgl of semuaTanggal) {
+                let st = dataAbsen[s.id][tgl];
+                if (st === "hadir") totalHadir++;
+                else if (st === "sakit") totalSakit++;
+                else if (st === "izin") totalIzin++;
+                else totalAlpha++;
             }
             semua[k] = { santriCount: daftarSantri.length, totalHadir, totalSakit, totalIzin, totalAlpha };
         }
         return semua;
     }
 
-    // ========== UI ==========
+    // ========== UI RENDER FUNCTIONS ==========
     let currentTanggalAbsensi = new Date().toISOString().slice(0,10);
+    const dynamicDiv = document.getElementById("dynamicContent");
+
+    function escapeHtml(str) { return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
     function showEditSiswa() {
-        dynamicDiv.innerHTML = `<h2><i class="fas fa-user-graduate"></i> Manajemen Data Siswa</h2><div class="class-buttons" id="kelasSiswaSelector"></div><div id="siswaListContainer"></div>`;
+        dbg('Membuka menu Edit Data Siswa');
+        dynamicDiv.innerHTML = `<h2><i class="fas fa-user-graduate"></i> Manajemen Data Siswa</h2><div class="class-buttons" id="kelasSiswaSelector"></div><div id="siswaListContainer"><div class="loading">Memuat data...</div></div>`;
         let activeKelas = "A";
         let siswaDataGlobal = {};
-        
-        async function refresh() { 
-            siswaDataGlobal = await loadSiswaPerKelas(); 
-            renderDaftarSiswa(activeKelas); 
-        }
-        
+        async function refresh() { siswaDataGlobal = await loadSiswaPerKelas(); renderDaftarSiswa(activeKelas); }
         function renderKelas() {
             const cont = document.getElementById("kelasSiswaSelector");
+            if (!cont) return;
             cont.innerHTML = "";
             KELAS_IDS.forEach(k => {
                 let btn = document.createElement("button");
                 btn.innerText = NAMA_KELAS[k];
                 btn.classList.add("class-btn");
-                if(k === activeKelas) btn.classList.add("active");
-                btn.onclick = async () => { activeKelas = k; renderKelas(); await refresh(); };
+                if (k === activeKelas) btn.classList.add("active");
+                btn.onclick = () => { activeKelas = k; renderKelas(); refresh(); };
                 cont.appendChild(btn);
             });
         }
-        
         async function renderDaftarSiswa(kelas) {
             let list = siswaDataGlobal[kelas] || [];
             const container = document.getElementById("siswaListContainer");
+            if (!container) return;
             container.innerHTML = `<div class="student-form"><input type="text" id="namaSiswaBaru" placeholder="Nama santri baru"><button id="tambahSiswaBtn"><i class="fas fa-plus"></i> Tambah</button></div><table><thead><tr><th>No</th><th>Nama</th><th>Aksi</th></tr></thead><tbody id="siswaTbody"></tbody></table>`;
             const tbody = document.getElementById("siswaTbody");
             function refreshTable() {
+                if (!tbody) return;
                 tbody.innerHTML = "";
                 list.forEach((s, idx) => {
                     let row = tbody.insertRow();
@@ -357,24 +271,20 @@
                     del.innerHTML = '<i class="fas fa-trash"></i> Hapus';
                     del.className = "btn-small";
                     del.style.background = "#c0392b";
-                    del.onclick = async () => { 
-                        if(confirm(`Hapus ${s.nama}?`)) { 
-                            await hapusSiswa(s.id); 
-                            await refresh(); 
-                            renderDaftarSiswa(activeKelas); 
-                        } 
-                    };
+                    del.onclick = async () => { if (confirm(`Hapus ${s.nama}?`)) { await hapusSiswa(s.id, s.nama); await refresh(); renderDaftarSiswa(activeKelas); } };
                     row.insertCell(2).appendChild(del);
                 });
             }
             refreshTable();
-            document.getElementById("tambahSiswaBtn").onclick = async () => {
-                let nama = document.getElementById("namaSiswaBaru").value.trim();
-                if(!nama) return alert("Nama kosong");
+            const tambahBtn = document.getElementById("tambahSiswaBtn");
+            if (tambahBtn) tambahBtn.onclick = async () => {
+                let nama = document.getElementById("namaSiswaBaru")?.value.trim();
+                if (!nama) return showToast("Nama tidak boleh kosong", true);
                 await tambahSiswa(kelas, nama);
                 await refresh();
                 renderDaftarSiswa(activeKelas);
-                document.getElementById("namaSiswaBaru").value = "";
+                const inputNama = document.getElementById("namaSiswaBaru");
+                if (inputNama) inputNama.value = "";
             };
         }
         renderKelas();
@@ -382,90 +292,67 @@
     }
 
     async function showAbsensi(kelas) {
+        dbg(`Membuka absensi kelas ${kelas}`);
         dynamicDiv.innerHTML = `<h2><i class="fas fa-book-open"></i> Absensi ${NAMA_KELAS[kelas]}</h2>
             <div class="date-picker"><label>Tanggal:</label><input type="date" id="tglAbsensi" value="${currentTanggalAbsensi}">
             <button id="refreshAbsensi"><i class="fas fa-sync-alt"></i> Muat</button>
             <button id="simpanSemuaAbsensi" style="background:#2c6e49;"><i class="fas fa-save"></i> Simpan Semua</button></div>
             <div id="absensiTableWrap"><div class="loading">Memuat data...</div></div>
             <div id="alertAbsensi" class="alert"></div>`;
-        
         async function loadTable() {
-            let tanggal = document.getElementById("tglAbsensi").value;
+            const tanggalInput = document.getElementById("tglAbsensi");
+            if (!tanggalInput) return;
+            let tanggal = tanggalInput.value;
             currentTanggalAbsensi = tanggal;
             let siswaData = await loadSiswaPerKelas();
             let siswa = siswaData[kelas] || [];
             let absMap = await getAbsensi(kelas, tanggal);
             let wrap = document.getElementById("absensiTableWrap");
-            
-            if(siswa.length === 0) { 
-                wrap.innerHTML = `<p>Belum ada siswa. Tambah di Edit Data Siswa.</p>`; 
-                return; 
-            }
-            
+            if (!wrap) return;
+            if (siswa.length === 0) { wrap.innerHTML = `<p>Belum ada siswa. Tambah di Edit Data Siswa.</p>`; return; }
             let html = `<table><thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
             siswa.forEach((s, idx) => {
                 let st = absMap[s.id] || "hadir";
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${escapeHtml(s.nama)}</td>
+                html += `<tr><td>${idx + 1}</td><td>${escapeHtml(s.nama)}</td>
                     <td><select id="stat_${s.id}" class="status-select">
                         <option value="hadir" ${st === 'hadir' ? 'selected' : ''}>✅ Hadir</option>
                         <option value="sakit" ${st === 'sakit' ? 'selected' : ''}>🤒 Sakit</option>
                         <option value="izin" ${st === 'izin' ? 'selected' : ''}>📝 Izin</option>
                         <option value="alpha" ${st === 'alpha' ? 'selected' : ''}>❌ Alpha</option>
                     </select></td>
-                    <td><button class="btn-small simpan-satu" data-id="${s.id}"><i class="fas fa-save"></i> Simpan</button></td>
-                </tr>`;
+                    <td><button class="btn-small simpan-satu" data-id="${s.id}"><i class="fas fa-save"></i> Simpan</button></td></tr>`;
             });
             html += `</tbody></table>`;
             wrap.innerHTML = html;
-            
             document.querySelectorAll(".simpan-satu").forEach(btn => {
                 btn.onclick = async () => {
                     let sid = btn.getAttribute("data-id");
                     let select = document.getElementById(`stat_${sid}`);
-                    await updateStatus(kelas, tanggal, sid, select.value);
-                    showAlertAbsensi("Tersimpan ✓", "success");
-                    loadTable();
+                    if (select) { await updateStatus(kelas, tanggal, sid, select.value); showToast("Tersimpan ✓"); loadTable(); }
                 };
             });
         }
-        
         async function simpanSemua() {
-            let tanggal = document.getElementById("tglAbsensi").value;
+            const tanggalInput = document.getElementById("tglAbsensi");
+            if (!tanggalInput) return;
+            let tanggal = tanggalInput.value;
             let siswaData = await loadSiswaPerKelas();
             let siswa = siswaData[kelas] || [];
             let newMap = {};
-            for(let s of siswa) {
-                let sel = document.getElementById(`stat_${s.id}`);
-                if(sel) newMap[s.id] = sel.value;
-            }
-            if(Object.keys(newMap).length) { 
-                await setBulkAbsensi(kelas, tanggal, newMap); 
-                showAlertAbsensi("Semua tersimpan ✓", "success"); 
-                loadTable(); 
-            } else {
-                showAlertAbsensi("Tidak ada perubahan", "info");
-            }
+            for (let s of siswa) { let sel = document.getElementById(`stat_${s.id}`); if (sel) newMap[s.id] = sel.value; }
+            if (Object.keys(newMap).length) { await setBulkAbsensi(kelas, tanggal, newMap); showToast("Semua tersimpan ✓"); loadTable(); }
+            else showToast("Tidak ada perubahan", true);
         }
-        
-        function showAlertAbsensi(msg, type) {
-            let el = document.getElementById("alertAbsensi");
-            el.style.display = "block";
-            el.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
-            el.style.background = type === "success" ? "#d1e7dd" : "#fff3cd";
-            setTimeout(() => el.style.display = "none", 2000);
-        }
-        
-        document.getElementById("refreshAbsensi").onclick = loadTable;
-        document.getElementById("simpanSemuaAbsensi").onclick = simpanSemua;
+        const refreshBtn = document.getElementById("refreshAbsensi");
+        const simpanBtn = document.getElementById("simpanSemuaAbsensi");
+        if (refreshBtn) refreshBtn.onclick = loadTable;
+        if (simpanBtn) simpanBtn.onclick = simpanSemua;
         loadTable();
     }
 
     async function showLaporan() {
-        // FIX: Default bulan to current month dynamically instead of hardcoded "2026-04"
+        dbg('Membuka menu Laporan');
         const currentMonth = new Date().toISOString().slice(0, 7);
-
         dynamicDiv.innerHTML = `<h2><i class="fas fa-chart-pie"></i> Laporan Bulanan</h2>
             <div class="class-buttons" id="kelasLaporanSelector"></div>
             <div class="date-picker"><label>Bulan & Tahun:</label><input type="month" id="bulanLaporan" value="${currentMonth}">
@@ -473,125 +360,94 @@
             <button id="generateAllLaporan" style="background:#16a085;"><i class="fas fa-chart-line"></i> Tampilkan Ringkasan Semua Kelas</button></div>
             <div id="laporanOutput"></div>
             <div class="footer-actions"><button id="printLaporanBtn"><i class="fas fa-print"></i> Cetak</button><button id="downloadLaporanPdf"><i class="fas fa-file-pdf"></i> Download PDF</button></div>`;
-        
         let activeKelas = "A";
-        
         function renderKelasLap() {
             const container = document.getElementById("kelasLaporanSelector");
+            if (!container) return;
             container.innerHTML = "";
             KELAS_IDS.forEach(k => {
                 let btn = document.createElement("button");
                 btn.innerText = NAMA_KELAS[k];
                 btn.classList.add("class-btn");
-                if(k === activeKelas) btn.classList.add("active");
+                if (k === activeKelas) btn.classList.add("active");
                 btn.onclick = () => { activeKelas = k; renderKelasLap(); generateLaporanPerKelas(); };
                 container.appendChild(btn);
             });
         }
-        
         async function generateLaporanPerKelas() {
-            let bulan = document.getElementById("bulanLaporan").value;
-            if(!bulan) return;
-            document.getElementById("laporanOutput").innerHTML = `<div class="loading">Memuat laporan...</div>`;
+            let bulan = document.getElementById("bulanLaporan")?.value;
+            if (!bulan) return;
+            const outputDiv = document.getElementById("laporanOutput");
+            if (outputDiv) outputDiv.innerHTML = `<div class="loading">Memuat laporan...</div>`;
             let { daftarSantri, dataAbsen, semuaTanggal } = await getRekapBulanan(activeKelas, bulan);
-            
-            if(daftarSantri.length === 0) {
-                document.getElementById("laporanOutput").innerHTML = `<p>Tidak ada data absensi untuk kelas ${NAMA_KELAS[activeKelas]} pada bulan ${bulan}. Silakan isi absensi terlebih dahulu.</p>`;
+            if (daftarSantri.length === 0 || semuaTanggal.length === 0) {
+                if (outputDiv) outputDiv.innerHTML = `<p>Belum ada data absensi untuk kelas ${NAMA_KELAS[activeKelas]} pada bulan ${bulan}.</p>`;
                 return;
             }
-
-            if(semuaTanggal.length === 0) {
-                document.getElementById("laporanOutput").innerHTML = `<p>Belum ada sesi absensi yang tersimpan untuk kelas ${NAMA_KELAS[activeKelas]} pada bulan ${bulan}.</p>`;
-                return;
-            }
-            
             let html = `<h3>📊 Laporan Bulanan ${NAMA_KELAS[activeKelas]} - ${bulan}</h3><div style="overflow-x:auto;"><table border="1"><thead><tr><th>No</th><th>Nama Santri</th>`;
             semuaTanggal.forEach(tgl => html += `<th>${tgl.slice(5)}</th>`);
             html += `<th>H</th><th>S</th><th>I</th><th>A</th></tr></thead><tbody>`;
-            
-            for(let s of daftarSantri) {
-                let h = 0, sakit = 0, izin = 0, alpha = 0;
-                html += `<tr><td>${daftarSantri.indexOf(s) + 1}</td><td>${escapeHtml(s.nama)}</td>`;
-                for(let tgl of semuaTanggal) {
+            for (let s of daftarSantri) {
+                let h=0, sakit=0, izin=0, alpha=0;
+                html += `<tr><td>${daftarSantri.indexOf(s)+1}</td><td>${escapeHtml(s.nama)}</td>`;
+                for (let tgl of semuaTanggal) {
                     let st = dataAbsen[s.id][tgl];
-                    if(st === "hadir") { html += `<td>✅</td>`; h++; }
-                    else if(st === "sakit") { html += `<td>🤒</td>`; sakit++; }
-                    else if(st === "izin") { html += `<td>📝</td>`; izin++; }
+                    if (st === "hadir") { html += `<td>✅</td>`; h++; }
+                    else if (st === "sakit") { html += `<td>🤒</td>`; sakit++; }
+                    else if (st === "izin") { html += `<td>📝</td>`; izin++; }
                     else { html += `<td>❌</td>`; alpha++; }
                 }
                 html += `<td>${h}</td><td>${sakit}</td><td>${izin}</td><td>${alpha}</td></tr>`;
             }
             html += `</tbody></table></div><p><small>✅ Hadir  🤒 Sakit  📝 Izin  ❌ Alpha</small></p>`;
-            document.getElementById("laporanOutput").innerHTML = html;
+            if (outputDiv) outputDiv.innerHTML = html;
         }
-        
         async function generateRingkasanSemuaKelas() {
-            let bulan = document.getElementById("bulanLaporan").value;
-            if(!bulan) return;
-            document.getElementById("laporanOutput").innerHTML = `<div class="loading">Memuat ringkasan semua kelas...</div>`;
+            let bulan = document.getElementById("bulanLaporan")?.value;
+            if (!bulan) return;
+            const outputDiv = document.getElementById("laporanOutput");
+            if (outputDiv) outputDiv.innerHTML = `<div class="loading">Memuat ringkasan...</div>`;
             let rekapAll = await getRekapSemuaKelas(bulan);
             let html = `<h3>📋 RINGKASAN SEMUA KELAS - ${bulan}</h3><table border="1"><thead><tr><th>Kelas</th><th>Jml Santri</th><th>Total Hadir</th><th>Total Sakit</th><th>Total Izin</th><th>Total Alpha</th></tr></thead><tbody>`;
-            for(let k of KELAS_IDS) {
+            for (let k of KELAS_IDS) {
                 let r = rekapAll[k];
                 html += `<tr><td>${NAMA_KELAS[k]}</td><td>${r.santriCount}</td><td>${r.totalHadir}</td><td>${r.totalSakit}</td><td>${r.totalIzin}</td><td>${r.totalAlpha}</td></tr>`;
             }
-            html += `</tbody></table><p><small>Total dihitung dari seluruh hari yang memiliki sesi absensi dalam bulan ini.</small></p>`;
-            document.getElementById("laporanOutput").innerHTML = html;
+            html += `</tbody></table><p><small>Total dihitung dari seluruh hari yang memiliki sesi absensi.</small></p>`;
+            if (outputDiv) outputDiv.innerHTML = html;
         }
-        
         function downloadAsPDF() {
-            const content = document.getElementById("laporanOutput").cloneNode(true);
-            if (!content.innerText.trim() || content.innerText.includes("Tidak ada data") || content.innerText.includes("Belum ada")) {
-                alert("Tidak ada laporan yang bisa diunduh. Silakan tampilkan laporan terlebih dahulu.");
+            const content = document.getElementById("laporanOutput")?.cloneNode(true);
+            if (!content?.innerText.trim() || content.innerText.includes("Tidak ada") || content.innerText.includes("Belum ada")) {
+                showToast("Tidak ada laporan yang bisa diunduh", true);
                 return;
             }
             const win = window.open('', '_blank');
-            win.document.write(`<html><head><title>Laporan Absensi</title><style>body{font-family:'Segoe UI',sans-serif;padding:20px}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #000;padding:8px;text-align:center}th{background:#2c3e50;color:white}h3{text-align:center}</style></head><body>${content.outerHTML}</body></html>`);
+            win.document.write(`<html><head><title>Laporan Absensi</title><style>body{font-family:'Segoe UI',sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:8px;text-align:center}th{background:#2c3e50;color:white}h3{text-align:center}</style></head><body>${content.outerHTML}</body></html>`);
             win.document.close();
             win.print();
         }
-        
         renderKelasLap();
-        document.getElementById("generateLaporan").onclick = generateLaporanPerKelas;
-        document.getElementById("generateAllLaporan").onclick = generateRingkasanSemuaKelas;
-        document.getElementById("printLaporanBtn").onclick = () => {
-            let content = document.getElementById("laporanOutput").cloneNode(true);
-            let win = window.open('', '_blank');
-            win.document.write(`<html><head><title>Laporan Absensi</title><style>table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:6px;text-align:center}</style></head><body>${content.innerHTML}</body></html>`);
-            win.document.close(); 
-            win.print();
-        };
-        document.getElementById("downloadLaporanPdf").onclick = downloadAsPDF;
+        const genBtn = document.getElementById("generateLaporan");
+        const genAllBtn = document.getElementById("generateAllLaporan");
+        const printBtn = document.getElementById("printLaporanBtn");
+        const pdfBtn = document.getElementById("downloadLaporanPdf");
+        if (genBtn) genBtn.onclick = generateLaporanPerKelas;
+        if (genAllBtn) genAllBtn.onclick = generateRingkasanSemuaKelas;
+        if (printBtn) printBtn.onclick = () => { let c = document.getElementById("laporanOutput")?.cloneNode(true); if(c) { let w = window.open('', '_blank'); w.document.write(`<html><head><title>Laporan</title><style>table,th,td{border:1px solid #aaa;border-collapse:collapse;padding:6px;text-align:center}</style></head><body>${c.innerHTML}</body></html>`); w.document.close(); w.print(); } };
+        if (pdfBtn) pdfBtn.onclick = downloadAsPDF;
         generateLaporanPerKelas();
     }
 
-    function escapeHtml(str) { 
-        return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
-    }
-    
-    // FIX: localStorage is blocked by Chrome on file:// protocol.
-    // Use in-memory variable as primary store; try localStorage as optional bonus.
+    // Logo handler
     let _logoDataUrl = null;
-
-    function storageSave(key, val) {
-        try { localStorage.setItem(key, val); } catch(e) {}
-    }
-    function storageLoad(key) {
-        try { return localStorage.getItem(key); } catch(e) { return null; }
-    }
-
     function setupLogo() {
         const logoContainer = document.getElementById("logoContainer");
-        const saved = _logoDataUrl || storageLoad("customLogo");
-        if (saved) {
-            _logoDataUrl = saved;
-            logoContainer.innerHTML = `<img src="${saved}" class="logo-img">`;
-        }
+        try { const saved = localStorage.getItem("customLogo"); if (saved) { _logoDataUrl = saved; logoContainer.innerHTML = `<img src="${saved}" class="logo-img">`; } } catch(e) {}
         logoContainer.onclick = () => {
             const input = document.createElement("input");
             input.type = "file";
             input.accept = "image/*";
-            // FIX: Must append to body first — required for file:// in Chrome/Firefox
             input.style.display = "none";
             document.body.appendChild(input);
             input.onchange = e => {
@@ -600,8 +456,9 @@
                     const reader = new FileReader();
                     reader.onload = ev => {
                         _logoDataUrl = ev.target.result;
-                        storageSave("customLogo", _logoDataUrl);
+                        try { localStorage.setItem("customLogo", _logoDataUrl); } catch(e) {}
                         logoContainer.innerHTML = `<img src="${_logoDataUrl}" class="logo-img">`;
+                        showToast("Logo berhasil diubah");
                     };
                     reader.readAsDataURL(file);
                 }
@@ -611,16 +468,26 @@
         };
     }
 
-    // Event binding
-    document.getElementById("btnDataSiswa").onclick = () => { dbg("Klik: Edit Data Siswa"); showEditSiswa(); };
-    document.getElementById("btnKelasA").onclick = () => { dbg("Klik: Kelas A"); showAbsensi("A"); };
-    document.getElementById("btnKelasB").onclick = () => { dbg("Klik: Kelas B"); showAbsensi("B"); };
-    document.getElementById("btnKelasC").onclick = () => { dbg("Klik: Kelas C"); showAbsensi("C"); };
-    document.getElementById("btnKelasD").onclick = () => { dbg("Klik: Kelas D"); showAbsensi("D"); };
-    document.getElementById("btnLaporan").onclick = () => { dbg("Klik: Laporan"); showLaporan(); };
-    dbg("Semua tombol terdaftar ✓", "#0ff");
-
-    setupLogo();
+    // Register event handlers after DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        dbg('DOM siap, menghubungkan tombol...');
+        const btnDataSiswa = document.getElementById("btnDataSiswa");
+        const btnKelasA = document.getElementById("btnKelasA");
+        const btnKelasB = document.getElementById("btnKelasB");
+        const btnKelasC = document.getElementById("btnKelasC");
+        const btnKelasD = document.getElementById("btnKelasD");
+        const btnLaporan = document.getElementById("btnLaporan");
+        
+        if (btnDataSiswa) btnDataSiswa.onclick = () => { dbg('Klik: Edit Data Siswa'); showEditSiswa(); };
+        if (btnKelasA) btnKelasA.onclick = () => { dbg('Klik: Kelas A'); showAbsensi("A"); };
+        if (btnKelasB) btnKelasB.onclick = () => { dbg('Klik: Kelas B'); showAbsensi("B"); };
+        if (btnKelasC) btnKelasC.onclick = () => { dbg('Klik: Kelas C'); showAbsensi("C"); };
+        if (btnKelasD) btnKelasD.onclick = () => { dbg('Klik: Kelas D'); showAbsensi("D"); };
+        if (btnLaporan) btnLaporan.onclick = () => { dbg('Klik: Laporan'); showLaporan(); };
+        
+        dbg('✅ Semua tombol terhubung!');
+        setupLogo();
+    });
 </script>
 </body>
 </html>
